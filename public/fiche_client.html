@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Fiche client — LiftAgenda</title>
+  <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;600&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --ink:#22462f; --green:#00EF97; --green-soft:#B3FF7F;
+      --mauve:#CFA7FF; --orange:#FFD580; --danger:#e45757;
+      --bg:#fff; --muted:#5b6b62;
+      --border:2px solid var(--green);
+      --shadow:0 6px 20px rgba(0,0,0,.06);
+    }
+    *{box-sizing:border-box}
+    body{margin:0; padding:24px; font-family:"Lexend",system-ui; color:var(--ink); background:#fafafa}
+    a.back{display:inline-block;margin-bottom:16px;color:#0e3c2b;text-decoration:none;font-weight:600}
+    a.back:hover{text-decoration:underline}
+    .card{background:var(--bg); border:var(--border); border-radius:20px; box-shadow:var(--shadow); padding:18px; margin:auto; max-width:980px}
+    h1{margin:0 0 6px; font-weight:700}
+    .muted{color:var(--muted)}
+    .row{display:grid; grid-template-columns:repeat(12,1fr); gap:12px}
+    .col-6{grid-column:span 6} .col-4{grid-column:span 4} .col-3{grid-column:span 3} .col-12{grid-column:span 12}
+    label{font-weight:600; font-size:.92rem}
+    input,select,textarea{width:100%; padding:10px 12px; border-radius:12px; border:2px solid var(--green); outline:none}
+    input:focus,select:focus,textarea:focus{box-shadow:0 0 0 3px var(--green-soft)}
+    textarea{min-height:80px; resize:vertical}
+    .actions{display:flex; gap:8px; justify-content:flex-end; margin-top:10px}
+    .btn{border:none; cursor:pointer; padding:10px 14px; border-radius:12px; font-weight:800; transition:.15s transform, .15s filter}
+    .btn:active{transform:scale(.98)}
+    .btn.primary{background:var(--green); color:#08351f}
+    .btn.secondary{background:linear-gradient(135deg,var(--mauve),var(--orange)); color:#312b0f}
+    .btn.ghost{background:#fff; border:2px solid var(--green); color:#0c5136}
+    .btn.danger{background:#fff; border:2px solid var(--danger); color:#7a1d1d}
+    .section{margin-top:18px}
+    .section h2{margin:0 0 10px; font-size:1.1rem}
+    .pill{display:inline-block; padding:4px 10px; border-radius:999px; background:var(--green-soft); border:2px solid var(--green); font-weight:700}
+    .list{display:flex; flex-direction:column; gap:10px}
+    .invoice{border:2px solid var(--green); border-radius:14px; padding:12px; background:#fff}
+    .invoice .top{display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap}
+    .invoice .meta{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+    .invoice .meta .chip{padding:4px 8px; border-radius:999px; background:#f7fff8; border:1px solid var(--green); font-weight:600; font-size:.85rem}
+    .invoice .grid{display:grid; grid-template-columns:repeat(12,1fr); gap:8px; margin-top:10px}
+    .invoice .grid > div{grid-column:span 3}
+    .invoice .grid .wide{grid-column:span 12}
+    .right{display:flex; gap:6px; flex-wrap:wrap}
+    .toast{position:fixed; right:16px; bottom:16px; background:#0d3b2a; color:#fff; padding:10px 14px; border-radius:12px; box-shadow:0 8px 20px rgba(0,0,0,.15); opacity:0; transform:translateY(10px); transition:.25s; z-index:9999}
+    .toast.show{opacity:1; transform:translateY(0)}
+    @media (max-width:900px){
+      .row{grid-template-columns:1fr}
+      .invoice .grid > div{grid-column:span 12}
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <a href="clients.html" class="back">← Retour à la liste</a>
+
+    <!-- En-tête -->
+    <h1 id="title">Fiche client</h1>
+    <div class="muted" id="subtitle">Chargement…</div>
+
+    <!-- Formulaire client -->
+    <div class="section">
+      <h2>Informations client</h2>
+      <form id="clientForm" class="row">
+        <input type="hidden" id="clientType"/>
+        <input type="hidden" id="clientId"/>
+        <div class="col-6" id="f_pro_nom_wrap" style="display:none">
+          <label>Nom de la société</label>
+          <input id="pro_nom" placeholder="Ex: Loca-Lift SRL">
+        </div>
+        <div class="col-3" id="f_pro_tva_wrap" style="display:none">
+          <label>TVA</label>
+          <input id="pro_tva" placeholder="BE0123.456.789">
+        </div>
+        <div class="col-12" id="f_pro_addr_wrap" style="display:none">
+          <label>Adresse</label>
+          <input id="pro_addr" placeholder="Rue, n°, CP Ville, Pays">
+        </div>
+        <div class="col-6" id="f_part_prenom_wrap" style="display:none">
+          <label>Prénom</label>
+          <input id="part_prenom" placeholder="Prénom">
+        </div>
+        <div class="col-6" id="f_part_nom_wrap" style="display:none">
+          <label>Nom</label>
+          <input id="part_nom" placeholder="Nom">
+        </div>
+        <div class="col-12" id="f_part_addr_wrap" style="display:none">
+          <label>Adresse</label>
+          <input id="part_addr" placeholder="Rue, n°, CP Ville, Pays">
+        </div>
+
+        <!-- commun -->
+        <div class="col-6">
+          <label>Téléphone</label>
+          <input id="tel" type="tel" placeholder="+32 ...">
+        </div>
+        <div class="col-6">
+          <label>Email</label>
+          <input id="mail" type="email" placeholder="nom@mail.com">
+        </div>
+        <div class="col-12">
+          <label>Note</label>
+          <textarea id="note" placeholder="Infos internes…"></textarea>
+        </div>
+      </form>
+
+      <div class="actions">
+        <button class="btn danger" id="btnDelete">Supprimer le client</button>
+        <button class="btn ghost" id="btnEmail">Envoyer un e-mail</button>
+        <button class="btn secondary" id="btnSave">Enregistrer les changements</button>
+      </div>
+    </div>
+
+    <!-- Facturation -->
+    <div class="section">
+      <h2>Factures du client <span class="pill" id="invCount">0</span></h2>
+
+      <!-- Création rapide -->
+      <div class="invoice">
+        <div class="top">
+          <div class="meta">
+            <span class="chip">➕ Nouvelle facture</span>
+          </div>
+        </div>
+        <div class="grid">
+          <div>
+            <label>Date</label>
+            <input type="date" id="nf_date">
+          </div>
+          <div>
+            <label>Statut</label>
+            <select id="nf_statut">
+              <option value="À payer">À payer</option>
+              <option value="Payée">Payée</option>
+              <option value="Non payé">Non payé</option>
+            </select>
+          </div>
+          <div>
+            <label>Canal</label>
+            <select id="nf_paiement">
+              <option value="">—</option>
+              <option>Wero</option>
+              <option>Virement</option>
+              <option>Espèces</option>
+              <option>Non payé</option>
+            </select>
+          </div>
+          <div>
+            <label>TVA (%)</label>
+            <input type="number" id="nf_vat" step="1" min="0" max="100" value="21">
+          </div>
+          <div class="wide">
+            <label>Description</label>
+            <input id="nf_desc" placeholder="Ex: Mission #LIFT 60m">
+          </div>
+          <div>
+            <label>Montant HT (€)</label>
+            <input type="number" id="nf_ht" step="0.01" min="0" placeholder="100.00">
+          </div>
+          <div>
+            <label>Montant TTC (€)</label>
+            <input type="number" id="nf_ttc" step="0.01" min="0" placeholder="121.00">
+          </div>
+          <div class="wide">
+            <button class="btn primary" id="btnCreateInv">Créer la facture</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Liste -->
+      <div class="list" id="invList">
+        <!-- Factures injectées ici -->
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast">Action effectuée</div>
+
+  <script type="module">
+    import { ref, get, set, push, update, remove, onValue } 
+      from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
+
+    // === Helpers UI
+    const $ = s => document.querySelector(s);
+    const showToast = (msg, ok=true)=>{
+      const t = $('#toast'); t.textContent = msg;
+      t.style.background = ok ? '#0d3b2a' : '#7a1d1d';
+      t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),1700);
+    };
+    const fmt2 = n => (isFinite(n) ? Number(n).toFixed(2) : '');
+
+    // === URL params
+    const params = new URLSearchParams(location.search);
+    const CLIENT_ID = params.get('id');
+    const CLIENT_TYPE = (params.get('type')||'').toUpperCase(); // 'PRO' | 'PART'
+
+    // === Guards
+    if(!window?.db){
+      showToast('Firebase non initialisé dans cette page.', false);
+    }
+    if(!CLIENT_ID || !CLIENT_TYPE){
+      showToast('Paramètres manquants (id/type).', false);
+    }
+    // --- Variables globales ---
+    let selectedPayMethod = null;
+
+    // === Load Client
+    async function loadClient(){
+      const path = CLIENT_TYPE === 'PRO' ? `clients/pro/${CLIENT_ID}` : `clients/part/${CLIENT_ID}`;
+      const snap = await get(ref(window.db, path));
+      if(!snap.exists()){
+        $('#subtitle').textContent = 'Client introuvable.';
+        return null;
+      }
+      const c = snap.val();
+
+      $('#clientType').value = CLIENT_TYPE;
+      $('#clientId').value = CLIENT_ID;
+
+      // UI: champs visibles selon type
+      const show = (id, vis)=> { const el = $(id); if(el) el.style.display = vis ? 'block' : 'none'; };
+      const setv = (id, v)=> { const el = $(id); if(el) el.value = v || ''; };
+
+      if(CLIENT_TYPE === 'PRO'){
+        show('#f_pro_nom_wrap', true);
+        show('#f_pro_tva_wrap', true);
+        show('#f_pro_addr_wrap', true);
+        show('#f_part_prenom_wrap', false);
+        show('#f_part_nom_wrap', false);
+        show('#f_part_addr_wrap', false);
+
+        setv('#pro_nom', c.nom);
+        setv('#pro_tva', c.tva);
+        setv('#pro_addr', c.adresse);
+      }else{
+        show('#f_pro_nom_wrap', false);
+        show('#f_pro_tva_wrap', false);
+        show('#f_pro_addr_wrap', false);
+        show('#f_part_prenom_wrap', true);
+        show('#f_part_nom_wrap', true);
+        show('#f_part_addr_wrap', true);
+
+        setv('#part_prenom', c.prenom);
+        setv('#part_nom', c.nom);
+        setv('#part_addr', c.adresse);
+      }
+
+      setv('#tel', c.tel);
+      setv('#mail', c.mail);
+      setv('#note', c.note);
+
+      // Titre & sous-titre
+      const displayName = CLIENT_TYPE === 'PRO' ? (c.nom || '—') : [c.prenom, c.nom].filter(Boolean).join(' ');
+      $('#title').textContent = displayName;
+      $('#subtitle').textContent = CLIENT_TYPE === 'PRO' ? 'Professionnel' : 'Particulier';
+
+      return c;
+    }
+
+    // === Save Client
+    async function saveClient(){
+      const path = CLIENT_TYPE === 'PRO' ? `clients/pro/${CLIENT_ID}` : `clients/part/${CLIENT_ID}`;
+      const payload = {
+        updatedAt: Date.now(),
+        tel: $('#tel').value.trim(),
+        mail: $('#mail').value.trim(),
+        note: $('#note').value.trim(),
+      };
+      if(CLIENT_TYPE === 'PRO'){
+        payload.nom = $('#pro_nom').value.trim();
+        payload.tva = $('#pro_tva').value.trim();
+        payload.adresse = $('#pro_addr').value.trim();
+        if(!payload.nom){ showToast('Nom de la société requis', false); return; }
+      }else{
+        payload.prenom = $('#part_prenom').value.trim();
+        payload.nom = $('#part_nom').value.trim();
+        payload.adresse = $('#part_addr').value.trim();
+        if(!payload.nom && !payload.prenom){ showToast('Nom/prénom requis', false); return; }
+      }
+      await update(ref(window.db, path), payload);
+      showToast('Client enregistré ✅');
+      await loadClient(); // refresh header
+    }
+
+    // === Delete Client
+    async function deleteClient(){
+      if(!confirm('Supprimer définitivement ce client ?')) return;
+      const path = CLIENT_TYPE === 'PRO' ? `clients/pro/${CLIENT_ID}` : `clients/part/${CLIENT_ID}`;
+      await remove(ref(window.db, path));
+      showToast('Client supprimé 🗑️');
+      setTimeout(()=> location.href = 'clients.html', 500);
+    }
+
+    // === Email compose
+    function openEmail(){
+      const to = ($('#mail').value || '').trim();
+      const name = $('#title').textContent.trim();
+      const subject = encodeURIComponent(`Facture / informations — ${name}`);
+      const body = encodeURIComponent(`Bonjour ${name},
+
+Je vous contacte au sujet de votre facture.
+        
+— 
+LiftAgenda Team`);
+      if(to){
+        // Ouvre Gmail compose si possible, sinon mailto
+        window.open(`https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(to)}&su=${subject}&body=${body}`, '_blank');
+      }else{
+        window.open(`mailto:?subject=${subject}&body=${body}`, '_blank');
+      }
+    }
+
+    // === Invoices (branche /facturation)
+    // Compatibilité : on filtre sur type + nom/prénom + (si dispo) clientId
+    const normalize = s => (s||'').toString().trim().toUpperCase().replace(/\s+/g,' ');
+    function makeClientMatch(c){
+      if(CLIENT_TYPE === 'PRO'){
+        return { clientType:'PRO', nameKey: normalize(c.nom), id: CLIENT_ID };
+      }else{
+        return { clientType:'PART', nameKey: normalize([c.prenom, c.nom].filter(Boolean).join(' ')), id: CLIENT_ID };
+      }
+    }
+
+    async function createInvoiceBase(currentClient){
+      const date = $('#nf_date').value || new Date().toISOString().slice(0,10);
+      const statut = $('#nf_statut').value || 'À payer';
+      const paiement = $('#nf_paiement').value || '';
+      const vat = Number($('#nf_vat').value || 21);
+      const desc = $('#nf_desc').value.trim();
+      const ht = Number(($('#nf_ht').value || '0').replace(',','.'));
+      const ttcField = $('#nf_ttc').value;
+      const ttc = ttcField ? Number(ttcField.replace(',','.')) : (isFinite(ht) ? ht * (1 + vat/100) : 0);
+
+      const base = {
+        date,
+        statut,                 // "À payer" | "Payée" | "Non payé"
+        paiement,               // "Wero" | "Virement" | "Espèces" | "Non payé" | ""
+        description: desc || '',
+        amountHT: isFinite(ht) ? +ht.toFixed(2) : 0,
+        vat: isFinite(vat) ? vat : 21,
+        amountTTC: isFinite(ttc) ? +ttc.toFixed(2) : 0,
+        clientType: CLIENT_TYPE,
+        createdAt: Date.now(),
+        clientId: CLIENT_ID,    // 🔗 lien direct (nouveau, non bloquant)
+      };
+
+      if(CLIENT_TYPE === 'PRO'){
+        base.nom = currentClient.nom || '';
+      }else{
+        base.prenom = currentClient.prenom || '';
+        base.nom = currentClient.nom || '';
+      }
+
+      return base;
+    }
+
+    function invoiceItemHTML(id, inv){
+      const human = inv.description || (inv.type ? `Prestation ${inv.type}` : 'Facture');
+      const statusChip = `<span class="chip">${inv.statut || '—'}</span>`;
+      const canalChip = inv.paiement ? `<span class="chip">💳 ${inv.paiement}</span>` : '';
+      const totalChip = `<span class="chip">💶 ${fmt2(inv.amountTTC ?? inv.somme ?? 0)} €</span>`;
+      const dateChip  = `<span class="chip">📅 ${inv.date || '—'}</span>`;
+      const avoirChip = inv.avoir ? `<span class="chip">🪶 Avoir</span>` : '';
+
+      return `
+        <div class="invoice" data-id="${id}">
+          <div class="top">
+            <div class="meta">
+              ${dateChip}${statusChip}${canalChip}${totalChip}${avoirChip}
+            </div>
+            <div class="right">
+              <button class="btn ghost" data-act="mail">Envoyer 📧</button>
+              <button class="btn secondary" data-act="paytoggle">${inv.statut==='Payée' ? 'Marquer NON payée' : 'Marquer Payée'}</button>
+              <button class="btn ghost" data-act="avoir">Créer un avoir</button>
+              <button class="btn danger" data-act="del">Supprimer</button>
+            </div>
+          </div>
+          <div class="grid" style="margin-top:8px">
+            <div class="wide">
+              <label>Description</label>
+              <input data-field="description" value="${inv.description || ''}">
+            </div>
+            <div>
+              <label>HT (€)</label>
+              <input type="number" step="0.01" data-field="amountHT" value="${fmt2(inv.amountHT ?? 0)}">
+            </div>
+            <div>
+              <label>TVA (%)</label>
+              <input type="number" step="1" min="0" max="100" data-field="vat" value="${inv.vat ?? 21}">
+            </div>
+            <div>
+              <label>TTC (€)</label>
+              <input type="number" step="0.01" data-field="amountTTC" value="${fmt2(inv.amountTTC ?? inv.somme ?? 0)}">
+            </div>
+            <div>
+              <label>Statut</label>
+              <select data-field="statut">
+                ${['À payer','Payée','Non payé'].map(s=>`<option ${inv.statut===s?'selected':''}>${s}</option>`).join('')}
+              </select>
+            </div>
+            <div>
+              <label>Canal</label>
+              <select data-field="paiement">
+                ${['','Wero','Virement','Espèces','Non payé'].map(s=>`<option ${inv.paiement===s?'selected':''}>${s}</option>`).join('')}
+              </select>
+            </div>
+            <div class="wide">
+              <button class="btn primary" data-act="save">💾 Enregistrer la facture</button>
+            </div>
+          </div>
+          <div class="muted" style="margin-top:6px">${human}</div>
+        </div>
+      `;
+    }
+
+    function attachInvoiceHandlers(div){
+      // save
+      div.querySelectorAll('[data-act="save"]').forEach(b=>{
+        b.addEventListener('click', async ()=>{
+          const wrap = b.closest('.invoice');
+          const id = wrap.dataset.id;
+          const inputs = wrap.querySelectorAll('[data-field]');
+          const upd = {};
+          inputs.forEach(inp=>{
+            const k = inp.dataset.field;
+            let v = inp.value;
+            if(['amountHT','amountTTC','vat'].includes(k)){
+              v = Number(v.toString().replace(',','.'));
+              if(isFinite(v)) v = +v;
+              else v = 0;
+            }
+            upd[k] = v;
+          });
+          await update(ref(window.db, `facturation/${id}`), upd);
+          showToast('Facture modifiée ✅');
+        });
+      });
+
+      // delete
+      div.querySelectorAll('[data-act="del"]').forEach(b=>{
+        b.addEventListener('click', async ()=>{
+          const id = b.closest('.invoice').dataset.id;
+          if(!confirm('Supprimer cette facture ?')) return;
+          await remove(ref(window.db, `facturation/${id}`));
+          showToast('Facture supprimée 🗑️');
+        });
+      });
+
+      // pay toggle
+      div.querySelectorAll('[data-act="paytoggle"]').forEach(b=>{
+        b.addEventListener('click', async ()=>{
+          const id = b.closest('.invoice').dataset.id;
+          const statut = b.textContent.includes('NON') ? 'Non payé' : 'Payée';
+          await update(ref(window.db, `facturation/${id}`), { statut });
+          showToast(`Statut: ${statut} ✅`);
+        });
+      });
+
+      // avoir
+      div.querySelectorAll('[data-act="avoir"]').forEach(b=>{
+        b.addEventListener('click', async ()=>{
+          const id = b.closest('.invoice').dataset.id;
+          const snap = await get(ref(window.db, `facturation/${id}`));
+          if(!snap.exists()) return;
+          const inv = snap.val();
+          const now = new Date().toISOString().slice(0,10);
+          const avoir = {
+            ...inv,
+            statut: 'À payer',
+            paiement: '',
+            amountHT: inv.amountHT ? -Math.abs(inv.amountHT) : 0,
+            amountTTC: inv.amountTTC ? -Math.abs(inv.amountTTC) : (inv.somme ? -Math.abs(inv.somme) : 0),
+            somme: undefined,
+            description: (inv.description ? inv.description+' — ' : '') + 'AVOIR',
+            date: now,
+            avoir: true,
+            refInvoiceId: id,
+            createdAt: Date.now()
+          };
+          delete avoir.createdAt_old;
+          const res = await push(ref(window.db, 'facturation'), avoir);
+          showToast('Avoir créé 🪶');
+        });
+      });
+
+      // send email
+      div.querySelectorAll('[data-act="mail"]').forEach(b=>{
+        b.addEventListener('click', async ()=>{
+          const id = b.closest('.invoice').dataset.id;
+          const invSnap = await get(ref(window.db, `facturation/${id}`));
+          const inv = invSnap.val() || {};
+          const to = ($('#mail').value || '').trim();
+          const name = $('#title').textContent.trim();
+          const subject = encodeURIComponent(`Facture ${inv.date || ''} — ${name}`);
+          const body = encodeURIComponent(`Bonjour ${name},
+
+Veuillez trouver ci-dessous le récapitulatif de votre facture :
+- Date : ${inv.date || '—'}
+- Description : ${inv.description || '—'}
+- Montant TTC : ${fmt2(inv.amountTTC ?? inv.somme ?? 0)} €
+
+Merci d'avance.
+
+— 
+LiftAgenda Team`);
+          if(to){
+            window.open(`https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(to)}&su=${subject}&body=${body}`, '_blank');
+          }else{
+            window.open(`mailto:?subject=${subject}&body=${body}`, '_blank');
+          }
+        });
+      });
+    }
+
+    async function loadInvoicesForClient(currentClient){
+      const list = $('#invList');
+      list.innerHTML = '<div class="muted">Chargement des factures…</div>';
+
+      const allSnap = await get(ref(window.db, 'facturation'));
+      const data = allSnap.val() || {};
+
+      const match = makeClientMatch(currentClient);
+
+      // Filtrage : priorité clientId si présent, sinon nom/prénom/type
+      const items = Object.entries(data).map(([id,inv])=>({id, ...inv})).filter(x=>{
+        if(x.clientId === CLIENT_ID) return true;
+        // fallback par type + nom
+        if(match.clientType === 'PRO'){
+          return x.clientType === 'PRO' && normalize(x.nom) === match.nameKey;
+        }else{
+          const full = normalize([x.prenom, x.nom].filter(Boolean).join(' '));
+          return x.clientType === 'PART' && full === match.nameKey;
+        }
+      }).sort((a,b)=> (a.date||'').localeCompare(b.date||''));
+
+      $('#invCount').textContent = items.length.toString();
+
+      list.innerHTML = items.map(x=>invoiceItemHTML(x.id, x)).join('') || '<div class="muted">Aucune facture pour ce client.</div>';
+      list.querySelectorAll('.invoice').forEach(attachInvoiceHandlers);
+    }
+
+    // === Create invoice
+    async function createInvoice(){
+      const current = await loadClient();
+      if(!current) return;
+
+      const base = await createInvoiceBase(current);
+      // Compat desc par défaut si vide
+      if(!base.description){
+        base.description = CLIENT_TYPE==='PRO' ? 'Prestation PRO' : 'Prestation PARTICULIER';
+      }
+      // Compat champs historiques
+      if(base.amountTTC && !base.somme){ base.somme = base.amountTTC; }
+
+      const res = await push(ref(window.db, 'facturation'), base);
+      showToast('Facture créée ✅');
+      // refresh
+      await loadInvoicesForClient(current);
+    }
+
+    // === Wire buttons
+    $('#btnSave').addEventListener('click', saveClient);
+    $('#btnDelete').addEventListener('click', deleteClient);
+    $('#btnEmail').addEventListener('click', openEmail);
+    $('#btnCreateInv').addEventListener('click', (e)=>{ e.preventDefault(); createInvoice(); });
+
+    // === Defaults
+    $('#nf_date').value = new Date().toISOString().slice(0,10);
+
+    // === Boot
+    (async ()=>{
+      const c = await loadClient();
+      if(c){ await loadInvoicesForClient(c); }
+    })();
+  </script>
+</body>
+</html>

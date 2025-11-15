@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LiftAgenda — Facturation</title>
+  <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --ink:#4D6539;
+      --green:#00EF97;
+      --green-soft:#B3FF7F;
+      --mauve:#CFA7FF;
+      --orange:#FFD580;
+      --bg:#fff;
+    }
+    *{box-sizing:border-box;}
+    body {
+      margin:0; padding:24px;
+      font-family:"Lexend",system-ui;
+      color:var(--ink);
+      background:#fafafa;
+    }
+    h1 {
+      margin:0 0 16px;
+      font-weight:600;
+      letter-spacing:.3px;
+    }
+    .sub {opacity:.8; margin-bottom:20px;}
+    .card {
+      background:var(--bg);
+      border:2px solid var(--green);
+      border-radius:20px;
+      box-shadow:0 6px 20px rgba(0,0,0,.06);
+      padding:16px;
+    }
+    label {font-weight:600; font-size:.9rem;}
+    input, select {
+      border:2px solid var(--green);
+      border-radius:12px;
+      padding:8px 10px;
+      width:100%;
+      color:var(--ink);
+      background:#fff;
+    }
+    input:focus, select:focus {outline:none; box-shadow:0 0 0 3px var(--green-soft);}
+    .row {display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:12px;}
+    .actions {display:flex; justify-content:flex-end; gap:8px; margin-top:16px;}
+    .btn {
+      border:none;
+      cursor:pointer;
+      padding:10px 14px;
+      border-radius:12px;
+      font-weight:700;
+      color:#08351f;
+      background:var(--green);
+      transition:.15s transform,.15s filter;
+    }
+    .btn.secondary {background:linear-gradient(135deg,var(--mauve),var(--orange)); color:#312b0f;}
+    .btn.ghost {background:#fff; border:2px solid var(--green); color:#0c5136;}
+    .btn:active{transform:scale(.98);}
+    table {
+      width:100%;
+      border-collapse:collapse;
+      margin-top:1rem;
+      background:#fff;
+      border-radius:12px;
+      overflow:hidden;
+    }
+    th, td {
+      padding:10px 12px;
+      border-bottom:1px solid #d9f5e2;
+      text-align:left;
+    }
+    th {
+      background:var(--green-soft);
+      font-weight:600;
+      color:var(--ink);
+    }
+    tr:hover {background:#f7fff8;}
+    .status {
+      padding:4px 8px;
+      border-radius:999px;
+      font-size:.85rem;
+      font-weight:600;
+    }
+    .status.paye {background:var(--green-soft); border:2px solid var(--green);}
+    .status.attente {background:var(--orange); border:2px solid #f0ad00;}
+    .toast {
+      position:fixed;
+      right:16px;
+      bottom:16px;
+      background:#0d3b2a;
+      color:#fff;
+      padding:10px 14px;
+      border-radius:12px;
+      box-shadow:0 8px 20px rgba(0,0,0,.15);
+      opacity:0;
+      transform:translateY(10px);
+      transition:.25s;
+      z-index:9999;
+    }
+    .toast.show{opacity:1; transform:translateY(0);}
+    .total{
+      font-weight:700;
+      font-size:1.1rem;
+      text-align:right;
+      margin-top:10px;
+      color:#09381d;
+    }
+  </style>
+</head>
+<body>
+  <h1>💼 Gestion de la facturation</h1>
+  <div class="sub">Crée, modifie et suis tes factures <strong>LiftAgenda</strong>.</div>
+
+  <!-- ===== Formulaire création facture ===== -->
+  <div class="card">
+    <form id="invoiceForm">
+      <div class="row">
+        <div>
+          <label>Type de client</label>
+          <select id="clientType">
+            <option value="PRO">Professionnel</option>
+            <option value="PART">Particulier</option>
+          </select>
+        </div>
+        <div>
+          <label>Nom du client</label>
+          <input id="clientName" placeholder="Nom ou société" required>
+        </div>
+        <div>
+          <label>Description du service</label>
+          <input id="description" placeholder="Ex: Location lift" required>
+        </div>
+        <div>
+          <label>Type de service</label>
+          <select id="serviceType">
+            <option value="mission">Mission lift</option>
+            <option value="heure">Prestation horaire</option>
+          </select>
+        </div>
+        <div>
+          <label>Montant HT (€)</label>
+          <input type="number" id="amountHT" step="0.01" required>
+        </div>
+        <div>
+          <label>TVA (%)</label>
+          <input type="number" id="vat" step="0.1" value="21">
+        </div>
+        <div>
+          <label>Acompte (€)</label>
+          <input type="number" id="acompte" step="0.01" value="0">
+        </div>
+        <div>
+          <label>Remise (€)</label>
+          <input type="number" id="remise" step="0.01" value="0">
+        </div>
+      </div>
+      <div class="total">
+        Montant TTC estimé : <span id="totalTTC">0.00 €</span>
+      </div>
+      <div class="actions">
+        <button type="reset" class="btn ghost">Annuler</button>
+        <button type="submit" class="btn secondary">Créer la facture</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- ===== Liste des factures ===== -->
+  <div class="card" style="margin-top:20px;">
+    <h3 style="margin-top:0;">🧾 Factures existantes</h3>
+    <table id="invoiceTable">
+      <thead>
+        <tr>
+          <th>N°</th>
+          <th>Date</th>
+          <th>Client</th>
+          <th>Service</th>
+          <th>Montant TTC</th>
+          <th>Statut</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast">Action effectuée</div>
+
+  <!-- JS -->
+  <script type="module">
+    import {
+      ref, get, set, update, remove, push, onValue
+    } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
+
+    const $ = s=>document.querySelector(s);
+    const showToast = (msg, ok=true)=>{
+      const t=$('#toast'); t.textContent=msg;
+      t.style.background=ok?'#0d3b2a':'#7a1d1d';
+      t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),1600);
+    };
+    if(!window?.db){showToast("Firebase non initialisé",false);}
+
+    const invoicesPath='invoices';
+    const formatMoney=n=>`${parseFloat(n||0).toFixed(2)} €`;
+
+    // ===== Calcul automatique TTC =====
+    function calcTTC(){
+      const ht=parseFloat($('#amountHT').value)||0;
+      const vat=parseFloat($('#vat').value)||0;
+      const acompte=parseFloat($('#acompte').value)||0;
+      const remise=parseFloat($('#remise').value)||0;
+      const ttc=ht*(1+vat/100)-acompte-remise;
+      $('#totalTTC').textContent=formatMoney(ttc>0?ttc:0);
+      return ttc;
+    }
+    ['amountHT','vat','acompte','remise'].forEach(id=>{
+      $('#'+id).addEventListener('input',calcTTC);
+    });
+
+    // ===== Création facture =====
+    async function createInvoice(e){
+      e.preventDefault();
+      const data={
+        clientType:$('#clientType').value,
+        clientName:$('#clientName').value.trim(),
+        description:$('#description').value.trim(),
+        serviceType:$('#serviceType').value,
+        amountHT:parseFloat($('#amountHT').value)||0,
+        vat:parseFloat($('#vat').value)||21,
+        acompte:parseFloat($('#acompte').value)||0,
+        remise:parseFloat($('#remise').value)||0,
+        date:new Date().toISOString().split('T')[0],
+        status:'a_payer',
+        createdAt:Date.now()
+      };
+      data.amountTTC=calcTTC();
+      const id=push(ref(window.db,invoicesPath)).key;
+      await set(ref(window.db,`${invoicesPath}/${id}`),data);
+      showToast("Facture créée ✅");
+      $('#invoiceForm').reset();
+      calcTTC();
+    }
+    $('#invoiceForm').addEventListener('submit',createInvoice);
+
+    // ==== Render invoices ====
+    const tableBody=$('#invoiceTable tbody');
+    onValue(ref(window.db,invoicesPath),snap=>{
+      const data=snap.val()||{};
+      const list=Object.entries(data).map(([id,v])=>({id,...v}));
+      list.sort((a,b)=>b.createdAt-a.createdAt);
+      tableBody.innerHTML=list.map(f=>`
+        <tr data-id="${f.id}">
+          <td>${f.id.slice(0,6).toUpperCase()}</td>
+          <td>${f.date}</td>
+          <td>${f.clientName}</td>
+          <td>${f.serviceType}</td>
+          <td>${formatMoney(f.amountTTC)}</td>
+          <td><span class="status ${f.status==='paye'?'paye':'attente'}">${f.status==='paye'?'Payée':'À payer'}</span></td>
+          <td>
+            <button class="mini edit">✏️</button>
+            <button class="mini del">🗑️</button>
+          </td>
+        </tr>
+      `).join('') || '<tr><td colspan="7" class="muted">Aucune facture pour l’instant.</td></tr>';
+      attachActions();
+    });
+
+    function attachActions(){
+      document.querySelectorAll('.mini.del').forEach(btn=>{
+        btn.addEventListener('click',async e=>{
+          const id=e.target.closest('tr').dataset.id;
+          if(confirm('Supprimer cette facture ?')){
+            await remove(ref(window.db,`${invoicesPath}/${id}`));
+            showToast("Facture supprimée 🗑️");
+          }
+        });
+      });
+      document.querySelectorAll('.mini.edit').forEach(btn=>{
+        btn.addEventListener('click',async e=>{
+          const id=e.target.closest('tr').dataset.id;
+          const snap=await get(ref(window.db,`${invoicesPath}/${id}`));
+          if(!snap.exists())return;
+          const f=snap.val();
+          $('#clientType').value=f.clientType;
+          $('#clientName').value=f.clientName;
+          $('#description').value=f.description;
+          $('#serviceType').value=f.serviceType;
+          $('#amountHT').value=f.amountHT;
+          $('#vat').value=f.vat;
+          $('#acompte').value=f.acompte;
+          $('#remise').value=f.remise;
+          calcTTC();
+          await remove(ref(window.db,`${invoicesPath}/${id}`)); // delete old before re-save
+          showToast("Mode édition activé ✏️");
+        });
+      });
+    }
+
+    // Init
+    calcTTC();
+  </script>
+</body>
+</html>
+
+
+

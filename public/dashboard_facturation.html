@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Tableau de bord — Facturation LiftAgenda</title>
+  <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;600&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --ink:#4D6539;
+      --green:#00EF97;
+      --green-soft:#B3FF7F;
+      --mauve:#CFA7FF;
+      --orange:#FFD580;
+      --bg:#fff;
+    }
+    *{box-sizing:border-box;}
+    body{
+      margin:0; padding:24px;
+      font-family:"Lexend",system-ui;
+      background:#fafafa;
+      color:var(--ink);
+    }
+    h1{margin:0 0 10px; font-weight:600;}
+    .sub{opacity:.8; margin-bottom:24px;}
+    .tabs{display:flex; gap:12px; margin-bottom:20px;}
+    .tab-btn{
+      padding:10px 16px;
+      border:none;
+      border-radius:999px;
+      background:linear-gradient(135deg,var(--mauve),var(--orange));
+      cursor:pointer;
+      font-weight:600;
+      opacity:.6;
+      transition:.2s;
+    }
+    .tab-btn.active{opacity:1; transform:translateY(-1px);}
+    .card{
+      background:var(--bg);
+      border:2px solid var(--green);
+      border-radius:20px;
+      box-shadow:0 6px 20px rgba(0,0,0,.06);
+      padding:16px;
+    }
+    .grid{display:grid; grid-template-columns:repeat(2,1fr); gap:16px;}
+    @media(max-width:900px){.grid{grid-template-columns:1fr;}}
+    .badge{
+      display:inline-block;
+      background:var(--green-soft);
+      border:2px solid var(--green);
+      border-radius:999px;
+      padding:4px 10px;
+      font-weight:700;
+      font-size:.85rem;
+      margin-bottom:10px;
+    }
+    .client-item{
+      padding:8px 10px;
+      border-radius:10px;
+      border:1px solid var(--green);
+      margin-bottom:6px;
+      background:#fff;
+      cursor:pointer;
+      transition:.15s;
+    }
+    .client-item:hover{background:var(--green-soft);}
+    .stats-box{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+      gap:12px;
+    }
+    .stat-card{
+      background:#fff;
+      border:2px solid var(--green);
+      border-radius:16px;
+      text-align:center;
+      padding:16px;
+      box-shadow:0 4px 12px rgba(0,0,0,.05);
+    }
+    .stat-card h2{margin:0; font-size:2rem;}
+    .stat-card span{font-size:.9rem; opacity:.7;}
+    input,textarea{
+      width:100%; padding:8px 10px; border:2px solid var(--green);
+      border-radius:12px; background:#fff; color:var(--ink);
+    }
+    input:focus,textarea:focus{outline:none; box-shadow:0 0 0 3px var(--green-soft);}
+    label{font-weight:600; font-size:.9rem;}
+    .form-row{display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:12px;}
+    .btn{
+      border:none; border-radius:12px; padding:10px 16px;
+      font-weight:700; cursor:pointer; background:var(--green);
+      color:#09381d; transition:.15s;
+    }
+    .btn.secondary{background:linear-gradient(135deg,var(--mauve),var(--orange));}
+    .btn:hover{filter:brightness(1.1);}
+    .toast{
+      position:fixed; right:16px; bottom:16px; background:#0d3b2a; color:#fff;
+      padding:10px 14px; border-radius:12px; box-shadow:0 8px 20px rgba(0,0,0,.15);
+      opacity:0; transform:translateY(10px); transition:.25s; z-index:9999;
+    }
+    .toast.show{opacity:1; transform:translateY(0);}
+  </style>
+</head>
+<body>
+  <h1>💼 Tableau de bord Facturation</h1>
+  <div class="sub">Gérez vos clients, factures et paramètres de facturation.</div>
+
+  <!-- Onglets -->
+  <div class="tabs">
+    <button class="tab-btn active" onclick="window.location.href='clients.html'">👥 Clients</button>
+    
+    <button class="tab-btn" data-tab="newclient">➕ Nouveau client</button>
+    <button class="tab-btn" data-tab="stats">📊 Statistiques</button>
+    <button class="tab-btn" data-tab="profil">⚙️ Profil #LiFT</button>
+  </div>
+
+  <!-- Contenus -->
+  <div id="tabContent">
+    
+
+    <!-- Onglet Nouveau client -->
+    <div id="tab-newclient" class="tab card" style="display:none;">
+      <p>Créer un nouveau client :</p>
+      <button class="btn secondary" onclick="window.location.href='clients.html'">➕ Aller à l’ajout de client</button>
+    </div>
+
+    <!-- Onglet Statistiques -->
+    <div id="tab-stats" class="tab card" style="display:none;">
+      <div class="stats-box">
+        <div class="stat-card">
+          <h2 id="nbPayees">0</h2><span>Factures payées</span>
+        </div>
+        <div class="stat-card">
+          <h2 id="nbNonPayees">0</h2><span>Factures non payées</span>
+        </div>
+        <div class="stat-card">
+          <h2 id="moyenPaiement">–</h2><span>Moyens de paiement</span>
+        </div>
+        <div class="stat-card">
+          <h2 id="derniereDate">–</h2><span>Dernier paiement</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Onglet Profil -->
+    <div id="tab-profil" class="tab card" style="display:none;">
+      <h3>Profil #LiFT</h3>
+      <form id="profilForm">
+        <div class="form-row">
+          <div><label>Nom société</label><input id="societe"></div>
+          <div><label>Adresse</label><input id="adresse"></div>
+          <div><label>TVA</label><input id="tva"></div>
+          <div><label>Email</label><input id="email"></div>
+          <div><label>Site internet</label><input id="site"></div>
+        </div>
+        <label style="margin-top:10px; display:block;">Message en fin de facture</label>
+        <textarea id="message" rows="2" placeholder="HASHTAG-LIFT VOUS REMERCIE DE VOTRE CONFIANCE"></textarea>
+        <label style="margin-top:10px; display:block;">Taux de TVA (%)</label>
+        <input id="vat" type="number" step="0.1" value="21">
+        <div style="text-align:right; margin-top:12px;">
+          <button type="submit" class="btn secondary">💾 Enregistrer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="toast" id="toast">Action effectuée</div>
+
+  <!-- JS -->
+  <script type="module">
+    import { ref, get, set, onValue } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
+    const $=s=>document.querySelector(s);
+    const showToast=(msg)=>{
+      const t=$('#toast'); t.textContent=msg; t.classList.add('show');
+      setTimeout(()=>t.classList.remove('show'),1600);
+    };
+
+    // --- Gestion des onglets ---
+    const tabs=document.querySelectorAll('.tab-btn');
+    tabs.forEach(btn=>{
+      btn.addEventListener('click',()=>{
+        tabs.forEach(b=>b.classList.remove('active'));
+        btn.classList.add('active');
+        document.querySelectorAll('.tab').forEach(t=>t.style.display='none');
+        $('#tab-'+btn.dataset.tab).style.display='block';
+      });
+    });
+
+    // --- Chargement clients (Pro & Part) ---
+    if(window?.db){
+      const dbPath=(t)=>'clients/'+t;
+      const listPro=$('#listPro'), listPart=$('#listPart');
+
+      function renderList(container, data, type){
+        const items=Object.entries(data||{}).map(([id,c])=>({id,...c}));
+        items.sort((a,b)=>{
+          const clean=n=> (n.nom||n.entreprise||n.prenom||'').replace(/\b(SRL|SA|ASBL|SPRL|BVBA)\b/gi,'').trim().toUpperCase();
+          return clean(a).localeCompare(clean(b));
+        });
+        container.innerHTML=items.map(x=>`
+          <div class="client-item" onclick="window.location.href='factures_client.html?id=${x.id}&type=${type}'">
+            ${x.nom||x.entreprise||x.prenom||'Inconnu'}
+          </div>
+        `).join('') || '<div style="opacity:.6">Aucun client enregistré.</div>';
+      }
+
+      onValue(ref(window.db,dbPath('pro')), snap=>renderList(listPro,snap.val(),'PRO'));
+      onValue(ref(window.db,dbPath('part')), snap=>renderList(listPart,snap.val(),'PART'));
+    }
+
+    // --- Statistiques facturation ---
+    if(window?.db){
+      onValue(ref(window.db,'invoices'), snap=>{
+        const data=snap.val()||{};
+        const list=Object.values(data);
+        const payees=list.filter(f=>f.status==='paye').length;
+        const nonpayees=list.filter(f=>f.status!=='paye').length;
+        const moyens=[...new Set(list.map(f=>f.paiement||''))].filter(Boolean).join(', ')||'–';
+        const dates=list.filter(f=>f.datePaiement).map(f=>f.datePaiement).sort().reverse();
+        $('#nbPayees').textContent=payees;
+        $('#nbNonPayees').textContent=nonpayees;
+        $('#moyenPaiement').textContent=moyens;
+        $('#derniereDate').textContent=dates[0]||'–';
+      });
+    }
+
+    // --- Profil #LiFT ---
+    const profilRef=ref(window.db,'settings/companyInfo');
+    const vatRef=ref(window.db,'settings/vatRate');
+    async function loadProfil(){
+      const [p,v]=await Promise.all([get(profilRef),get(vatRef)]);
+      if(p.exists()){
+        const d=p.val();
+        $('#societe').value=d.societe||'';
+        $('#adresse').value=d.adresse||'';
+        $('#tva').value=d.tva||'';
+        $('#email').value=d.email||'';
+        $('#site').value=d.site||'';
+        $('#message').value=d.message||'';
+      }
+      if(v.exists()) $('#vat').value=v.val();
+    }
+    loadProfil();
+
+    $('#profilForm').addEventListener('submit',async e=>{
+      e.preventDefault();
+      await set(profilRef,{
+        societe:$('#societe').value.trim(),
+        adresse:$('#adresse').value.trim(),
+        tva:$('#tva').value.trim(),
+        email:$('#email').value.trim(),
+        site:$('#site').value.trim(),
+        message:$('#message').value.trim(),
+      });
+      await set(vatRef,parseFloat($('#vat').value)||21);
+      showToast('Profil sauvegardé ✅');
+    });
+  </script>
+</body>
+</html>

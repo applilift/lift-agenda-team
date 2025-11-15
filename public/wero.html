@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Encaisser un paiement - LiftAgenda</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#ffffff">
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      margin: 0;
+      padding: 1.5rem;
+      background: #ffffff;
+      color: #111;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 1rem;
+      color: #333;
+    }
+    .card {
+      background: #f9f9f9;
+      border-radius: 1rem;
+      padding: 1.5rem;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+      max-width: 420px;
+      margin: auto;
+    }
+    label {
+      font-weight: 600;
+      display: block;
+      margin-top: 1rem;
+    }
+    input {
+      width: 100%;
+      padding: 0.6rem;
+      border: 1px solid #ddd;
+      border-radius: 0.5rem;
+      font-size: 1rem;
+    }
+    button {
+      margin-top: 1.5rem;
+      background: #b3ff7f;
+      border: none;
+      padding: 0.8rem 1.2rem;
+      border-radius: 0.5rem;
+      font-size: 1.1rem;
+      font-weight: 600;
+      width: 100%;
+      cursor: pointer;
+    }
+    button:active {
+      background: #9ee86c;
+    }
+    #qrcode {
+      text-align: center;
+      margin-top: 1.5rem;
+    }
+    #countdown {
+      text-align: center;
+      margin-top: 1rem;
+      color: #666;
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+  <h1>Encaisser un paiement</h1>
+  <div class="card">
+    <form id="wero-form">
+      <label for="amount">Montant à recevoir (€)</label>
+      <input type="number" id="amount" step="0.01" required>
+
+      <label for="sender">Nom du client (facultatif)</label>
+      <input type="text" id="sender" placeholder="Nom du client">
+
+      <button type="submit">Générer le QR de paiement</button>
+    </form>
+
+    <div id="qrcode"></div>
+    <div id="countdown"></div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
+  <script>
+    const form = document.getElementById('wero-form');
+    const qrDiv = document.getElementById('qrcode');
+    const countdownDiv = document.getElementById('countdown');
+    const senderInput = document.getElementById('sender');
+
+    // 🔹 Récupère la date et l’heure depuis l’URL
+    const params = new URLSearchParams(window.location.search);
+    const noteParam = params.get("note") || "";
+
+    // 🔹 Affiche la date/heure de réservation
+    const noteDisplay = document.createElement("div");
+    noteDisplay.style.marginTop = "1rem";
+    noteDisplay.style.fontWeight = "600";
+    noteDisplay.style.color = "#555";
+    noteDisplay.innerHTML = `🕓 Réservation : <strong>${noteParam}</strong>`;
+    form.prepend(noteDisplay);
+
+    // 🔹 Préremplit le champ du client
+    senderInput.placeholder = `Nom du client - ${noteParam}`;
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const amount = document.getElementById('amount').value;
+      const sender = senderInput.value.trim() || "Client";
+      const noteFinale = `${sender} (${noteParam})`;
+
+      // 🏦 Informations du compte société Belfius
+      const iban = "BE75068930251851"; // IBAN de VAPERO
+      const nom = "VAPERO TCH SCOMM";             // Nom exact du titulaire du compte
+      const bic = "BFSBBEBB";           // BIC Belfius (important pour compatibilité)
+
+      // ✅ Format QR SEPA EPC parfaitement conforme et accepté par Belfius
+      const sepaQR = `BCD
+001
+1
+SCT
+${bic}
+${nom}
+${iban}
+EUR${Number(amount).toFixed(2)}
+CHAR
+${noteFinale}`;
+
+      // 🔹 Génère le QR Code
+      qrDiv.innerHTML = "";
+      const canvas = document.createElement('canvas');
+      QRCode.toCanvas(canvas, sepaQR, { width: 280, margin: 2 }, (err) => {
+        if (!err) {
+          qrDiv.appendChild(canvas);
+          const label = document.createElement('div');
+          label.textContent = "Scannez avec votre application bancaire 📱";
+          label.style.marginTop = "0.8rem";
+          label.style.fontSize = "0.95rem";
+          label.style.color = "#444";
+          qrDiv.appendChild(label);
+        }
+      });
+
+      // 🔁 Retour automatique à l’agenda après 30 secondes
+      let timeLeft = 60;
+      countdownDiv.textContent = `⏳ Retour automatique vers l'agenda dans ${timeLeft} secondes...`;
+      const interval = setInterval(() => {
+        timeLeft--;
+        countdownDiv.textContent = `⏳ Retour automatique vers l'agenda dans ${timeLeft} secondes...`;
+        if (timeLeft <= 0) {
+          clearInterval(interval);
+          window.location.href = "index.html";
+        }
+      }, 1000);
+    });
+  </script>
+</body>
+</html>

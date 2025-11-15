@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>LiftAgenda — Clients</title>
+  <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;600&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --ink:#4D6539;
+      --green:#00EF97;
+      --green-soft:#B3FF7F;
+      --mauve:#CFA7FF;
+      --orange:#FFD580;
+      --bg:#fff;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; padding:24px;
+      font-family:"Lexend",system-ui;
+      color:var(--ink); background:#fafafa;
+    }
+    h1{ margin:0 0 16px; font-weight:600; letter-spacing:.2px }
+    .sub{opacity:.8; margin-bottom:20px}
+
+    .card{
+      background:var(--bg);
+      border:2px solid var(--green);
+      border-radius:20px;
+      box-shadow:0 6px 20px rgba(0,0,0,.06);
+      padding:16px;
+    }
+
+    .toggle{ display:flex; gap:8px; margin-bottom:12px; }
+    .toggle button{
+      border:none; cursor:pointer; padding:10px 14px; border-radius:999px;
+      font-weight:600; color:#12402b;
+      background:linear-gradient(135deg,var(--mauve),var(--orange));
+      opacity:.55; transition:.2s transform, .2s opacity;
+    }
+    .toggle button.active{ opacity:1; transform:translateY(-1px) }
+
+    label{ font-weight:600; font-size:.9rem }
+    input,textarea{
+      width:100%; padding:10px 12px; border-radius:12px; border:2px solid var(--green);
+      outline:none; color:var(--ink); background:#fff;
+    }
+    input:focus,textarea:focus{ box-shadow:0 0 0 3px var(--green-soft) }
+    textarea{ resize:vertical; min-height:72px }
+
+    .actions{ display:flex; gap:8px; justify-content:flex-end; margin-top:8px }
+    .btn{
+      border:none; cursor:pointer; padding:10px 14px; border-radius:12px; font-weight:700;
+      color:#08351f; background:var(--green);
+      transition:.15s transform, .15s filter
+    }
+    .btn.secondary{ background:linear-gradient(135deg,var(--mauve),var(--orange)); color:#312b0f }
+    .btn.ghost{ background:#fff; border:2px solid var(--green); color:#0c5136 }
+    .btn:active{ transform:scale(.98) }
+
+    .grid{ display:grid; gap:16px; margin-top:20px; grid-template-columns:repeat(2,1fr); }
+    @media (max-width:900px){ .grid{ grid-template-columns:1fr } }
+
+    .list-header{ display:flex; align-items:center; gap:10px; margin-bottom:10px }
+    .badge{
+      display:inline-block; padding:4px 10px; border-radius:999px; font-size:.85rem; font-weight:700;
+      background:var(--green-soft); border:2px solid var(--green);
+    }
+    ul{ list-style:none; padding:0; margin:0 }
+    li{ margin-bottom:6px; }
+    a.client-link{
+      display:block; padding:8px 10px; border-radius:10px;
+      background:#fff; border:2px solid var(--green);
+      text-decoration:none; color:var(--ink);
+      font-weight:600; transition:.15s;
+    }
+    a.client-link:hover{ background:var(--green-soft); }
+
+    .toast{
+      position:fixed; right:16px; bottom:16px; background:#0d3b2a; color:#fff;
+      padding:10px 14px; border-radius:12px; box-shadow:0 8px 20px rgba(0,0,0,.15);
+      opacity:0; transform:translateY(10px); transition:.25s; z-index:9999;
+    }
+    .toast.show{ opacity:1; transform:translateY(0) }
+  </style>
+</head>
+<body>
+  <h1>👥 Gestion des clients</h1>
+  <div class="sub">Ajoute, modifie et gère tes clients <strong>Professionnels</strong> et <strong>Particuliers</strong>.</div>
+
+  <!-- ===== Formulaire Ajout / Edition ===== -->
+  <div class="card">
+    <div class="toggle">
+      <button id="btnPro"  class="active" type="button">🧱 Professionnel</button>
+      <button id="btnPart" type="button">👤 Particulier</button>
+    </div>
+
+    <form id="clientForm">
+      <input type="hidden" id="editingId" value="">
+      <input type="hidden" id="editingType" value="">
+      <div id="proFields">
+        <label>Nom de la société</label>
+        <input id="pro_nom" placeholder="Ex : Loca-Lift SRL" required>
+        <label>TVA</label>
+        <input id="pro_tva" placeholder="BE0123.456.789">
+        <label>Adresse</label>
+        <input id="pro_addr" placeholder="Rue, n°, CP Ville, Pays">
+        <label>Téléphone</label>
+        <input id="pro_tel" type="tel" placeholder="+32 ...">
+        <label>Email</label>
+        <input id="pro_mail" type="email" placeholder="contact@societe.be">
+        <label>Note</label>
+        <textarea id="pro_note" placeholder="Infos internes…"></textarea>
+      </div>
+
+      <div id="partFields" style="display:none">
+        <label>Prénom</label>
+        <input id="part_prenom" placeholder="Prénom">
+        <label>Nom</label>
+        <input id="part_nom" placeholder="Nom">
+        <label>Adresse</label>
+        <input id="part_addr" placeholder="Rue, n°, CP Ville, Pays">
+        <label>Téléphone</label>
+        <input id="part_tel" type="tel" placeholder="+32 ...">
+        <label>Email</label>
+        <input id="part_mail" type="email" placeholder="nom@mail.com">
+        <label>Note</label>
+        <textarea id="part_note" placeholder="Infos internes…"></textarea>
+      </div>
+
+      <div class="actions">
+        <button class="btn ghost" type="button" id="resetBtn">Annuler</button>
+        <button class="btn secondary" type="submit" id="saveBtn">Enregistrer</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- ===== Listes ===== -->
+  <div class="grid">
+    <div class="card">
+      <div class="list-header"><span class="badge">🧱 Professionnels</span></div>
+      <ul id="listPro"></ul>
+    </div>
+    <div class="card">
+      <div class="list-header"><span class="badge">👤 Particuliers</span></div>
+      <ul id="listPart"></ul>
+    </div>
+  </div>
+
+  <div class="toast" id="toast">Action effectuée</div>
+
+  <script type="module">
+    import { ref, get, set, update, push, remove, onValue } 
+      from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
+
+    const $ = s=>document.querySelector(s);
+    const showToast = (msg, ok=true)=>{
+      const t=$('#toast'); t.textContent=msg;
+      const $$ = s => document.querySelectorAll(s);
+
+      t.style.background=ok?'#0d3b2a':'#7a1d1d';
+      t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),1600);
+    };
+    if(!window?.db){showToast("Firebase non initialisé",false);}
+
+    const normalize=(s)=>(s||'').toUpperCase().replace(/\b(SRL|SPRL|SA|ASBL|BV|NV)\b/g,'').trim();
+
+    const btnPro=$('#btnPro'),btnPart=$('#btnPart');
+    const proFields=$('#proFields'),partFields=$('#partFields');
+    let currentType='PRO';
+    const setType=t=>{
+      currentType=t;
+      btnPro.classList.toggle('active',t==='PRO');
+      btnPart.classList.toggle('active',t==='PART');
+      proFields.style.display=t==='PRO'?'block':'none';
+      partFields.style.display=t==='PART'?'block':'none';
+      $('#clientForm').reset();
+    };
+    btnPro.addEventListener('click',()=>setType('PRO'));
+    btnPart.addEventListener('click',()=>setType('PART'));
+
+    function formDataPRO(){
+      return{
+        type:'PRO',
+        nom:$('#pro_nom').value.trim(),
+        tva:$('#pro_tva').value.trim(),
+        adresse:$('#pro_addr').value.trim(),
+        tel:$('#pro_tel').value.trim(),
+        mail:$('#pro_mail').value.trim(),
+        note:$('#pro_note').value.trim(),
+        createdAt:Date.now()
+      };
+    }
+    function formDataPART(){
+      return{
+        type:'PART',
+        prenom:$('#part_prenom').value.trim(),
+        nom:$('#part_nom').value.trim(),
+        adresse:$('#part_addr').value.trim(),
+        tel:$('#part_tel').value.trim(),
+        mail:$('#part_mail').value.trim(),
+        note:$('#part_note').value.trim(),
+        createdAt:Date.now()
+      };
+    }
+
+    $('#clientForm').addEventListener('submit',async e=>{
+      e.preventDefault();
+      const data=currentType==='PRO'?formDataPRO():formDataPART();
+      if(currentType==='PRO' && !data.nom) return showToast("Nom requis",false);
+      if(currentType==='PART' && !data.nom && !data.prenom) return showToast("Nom/prénom requis",false);
+      await push(ref(window.db,`clients/${currentType.toLowerCase()}`),data);
+      showToast("Client ajouté ✅");
+      e.target.reset();
+    });
+    $('#resetBtn').addEventListener('click',()=>$('#clientForm').reset());
+
+    const listPro=$('#listPro'),listPart=$('#listPart');
+    function renderList(container,arr,type){
+      container.innerHTML=arr.map(c=>{
+        const title=type==='PRO'?(c.nom||'—'):[c.prenom,c.nom].filter(Boolean).join(' ');
+        return `<li><a target="_blank" href="fiche_client.html?id=${c.id}&type=${type}" class="client-link">${title}</a></li>`;
+      }).join('')||'<li class="muted">Aucun client.</li>';
+    }
+
+    onValue(ref(window.db,'clients/pro'),snap=>{
+      const data=snap.val()||{};
+      const arr=Object.entries(data).map(([id,v])=>({id,...v}));
+      arr.sort((a,b)=>normalize(a.nom).localeCompare(normalize(b.nom)));
+      renderList(listPro,arr,'PRO');
+    });
+    onValue(ref(window.db,'clients/part'),snap=>{
+      const data=snap.val()||{};
+      const arr=Object.entries(data).map(([id,v])=>({id,...v}));
+      arr.sort((a,b)=>normalize((a.prenom+' '+a.nom)).localeCompare(normalize((b.prenom+' '+b.nom))));
+      renderList(listPart,arr,'PART');
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,3507 @@
+<!DOCTYPE html>
+<!-- saved from url=(0047)https://lift-agenda-team.netlify.app/index.html -->
+<html lang="fr"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agenda — Réservations</title>
+
+  <!-- Anti-cache -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+
+  <style>
+    :root {
+      --red: #e74c3c;
+      --green: #2ecc71;
+      --orange: #f39c12;
+      --blue: #2980b9;
+      --ink: #1f2937;
+      --muted: #6b7280;
+      --bg: #f5f7fb;
+      --card: #fff;
+      --violet: #6d28d9;
+      --border: #e6e6e6;
+      --shadow: 0 1px 3px rgba(0, 0, 0, .06);
+    }
+
+    * {
+      box-sizing: border-box
+    }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: linear-gradient(135deg, #f1f4f9, #e8eef7 45%, #f7f7f9);
+      color: var(--ink);
+      min-height: 100vh;
+      padding: 16px;
+    }
+
+    .wrap {
+      max-width: 1100px;
+      margin: auto
+    }
+
+    /* ====== Titre + Notifications à droite ====== */
+    .title-wrap {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 14px
+    }
+
+    .title-wrap h1 {
+      font-size: 28px;
+      margin: 0
+    }
+
+    .next-rdv-box {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 4px;
+      font-size: 13px;
+      font-weight: 400
+    }
+
+    .next-rdv-box .rdv-red {
+      color: var(--red)
+    }
+
+    .next-rdv-box .rdv-green {
+      color: var(--green)
+    }
+
+    .next-rdv-box .rdv-orange {
+      color: var(--orange)
+    }
+
+    /* ====== Onglets ====== */
+    .tabs {
+      display: flex;
+      gap: 10px;
+      margin: 10px 0 16px
+    }
+
+    .tab-btn {
+      padding: 10px 14px;
+      border: none;
+      border-radius: 12px;
+      background: #eef2f7;
+      font-weight: 700;
+      cursor: pointer
+    }
+
+    .tab-btn.active {
+      background: #111827;
+      color: #fff
+    }
+
+    .tab-panel {
+      display: none
+    }
+
+    .tab-panel.active {
+      display: block
+    }
+
+    /* ====== Cartes / lignes ====== */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px;
+      margin-bottom: 16px;
+      box-shadow: var(--shadow)
+    }
+
+    .row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 10px
+    }
+
+    label.small {
+      font-size: 12px;
+      color: var(--muted);
+      display: block;
+      margin-bottom: 4px
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #cfd6e4;
+      border-radius: 10px;
+      font-size: 15px;
+      background: #fff;
+    }
+
+    /* ====== Types ====== */
+    .type-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px
+    }
+
+    .type-btn {
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-weight: 800;
+      border: 2px solid transparent;
+      background: #fff;
+      cursor: pointer
+    }
+
+    .type-EXP {
+      border-color: var(--red);
+      color: var(--red)
+    }
+
+    .type-LFT {
+      border-color: var(--green);
+      color: var(--green)
+    }
+
+    .type-PER {
+      border-color: var(--orange);
+      color: var(--orange)
+    }
+
+    .type-PAU {
+      border-color: var(--blue);
+      color: var(--blue)
+    }
+
+    .type-btn.active {
+      color: #fff
+    }
+
+    .type-EXP.active {
+      background: var(--red)
+    }
+
+    .type-LFT.active {
+      background: var(--green)
+    }
+
+    .type-PER.active {
+      background: var(--orange)
+    }
+
+    .type-PAU.active {
+      background: var(--blue)
+    }
+
+    /* ====== PRO / PART ====== */
+    .pp-wrap {
+      display: flex;
+      gap: 8px
+    }
+
+    .pp-btn {
+      padding: 6px 12px;
+      border: 2px solid var(--violet);
+      border-radius: 10px;
+      background: #fff;
+      color: var(--violet);
+      font-weight: 800;
+      cursor: pointer;
+      font-size: 14px
+    }
+
+    .pp-btn.active {
+      background: var(--violet);
+      color: #fff
+    }
+
+    /* ====== Pills / Fieldset ====== */
+    .pill {
+      display: inline-block;
+      border: 1px solid #cfd6e4;
+      border-radius: 999px;
+      padding: 6px 12px;
+      font-size: 13px;
+      cursor: pointer;
+      background: #f3f6fb;
+      color: #374151
+    }
+
+    .pill.orange {
+      background: var(--orange);
+      color: #fff;
+      border-color: var(--orange)
+    }
+
+    .pill.violet {
+      background: var(--violet);
+      color: #fff;
+      border-color: var(--violet)
+    }
+
+    .fieldset {
+      border: 1px solid #e6e9f2;
+      border-radius: 12px;
+      padding: 12px;
+      margin-top: 8px;
+      background: #f8faff
+    }
+
+    .fieldset legend {
+      font-weight: 800;
+      font-size: 14px
+    }
+
+    /* ====== Boutons ====== */
+    .btn-primary {
+      background: #111827;
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      padding: 12px 16px;
+      font-size: 15px;
+      cursor: pointer
+    }
+
+    .btn-secondary {
+      background: #fff;
+      color: #111;
+      border: 1px solid #cfd6e4;
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-size: 13px;
+      cursor: pointer
+    }
+
+    .btn-danger {
+      background: #fff;
+      color: #111;
+      border: 1px solid #cfd6e4;
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-size: 13px;
+      cursor: pointer
+    }
+
+    /* === Bouton "Ajouter la réservation" — dégradé orange-vert-mauve translucide === */
+#btnSave {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 169, 77, 0.9),   /* 🟧 orange doux */
+    rgba(112, 213, 138, 0.9),  /* 🟩 vert pastel */
+    rgba(153, 102, 255, 0.75)  /* 🟣 mauve léger */
+  );
+  color: #fff;
+  font-weight: 700;
+  font-size: 15px;
+  border: none;
+  border-radius: 14px;
+  padding: 12px 18px;
+  cursor: pointer;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
+  transition: all 0.25s ease;
+  backdrop-filter: blur(4px);
+}
+
+#btnSave:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 5px 14px rgba(0, 0, 0, 0.25);
+  opacity: 0.95;
+}
+
+/* Animation légère au survol — effet “pulsation douce” */
+#btnSave:active {
+  transform: scale(0.98);
+}
+
+    /* ====== Liste Réservations ====== */
+    .res-item {
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px;
+      margin-bottom: 10px;
+      background: #fff;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      align-items: center
+    }
+
+    .badge {
+      font-size: 12px;
+      font-weight: 800;
+      border-radius: 8px;
+      padding: 4px 8px;
+      display: inline-block;
+      color: #fff
+    }
+
+    .bEXP {
+      background: var(--red)
+    }
+
+    .bLFT {
+      background: var(--green)
+    }
+
+    .bPER {
+      background: var(--orange)
+    }
+
+    .bPAU {
+      background: var(--blue)
+    }
+
+    .muted {
+      color: var(--muted);
+      font-size: 13px
+    }
+
+    .title-line {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center
+    }
+
+    .actions {
+      display: flex;
+      gap: 8px
+    }
+
+    /* ====== Admin ====== */
+    .admin-h3 {
+      margin: 8px 0 8px;
+      font-size: 18px
+    }
+
+    .admin-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px
+    }
+
+    .admin-table th,
+    .admin-table td {
+      border-bottom: 1px solid #eef0f6;
+      padding: 8px;
+      text-align: left
+    }
+
+    .admin-table thead th {
+      background: #f1f3f9
+    }
+
+    .row-color-exp thead th {
+      background: #fdecea
+    }
+
+    .row-color-lft thead th {
+      background: #eafaf1
+    }
+
+    /* ====== Toast ====== */
+    .toast {
+      position: fixed;
+      bottom: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #111827;
+      color: #fff;
+      padding: 10px 14px;
+      border-radius: 12px;
+      font-size: 13px;
+      opacity: 0;
+      transition: opacity .25s, transform .25s;
+      z-index: 9999
+    }
+
+    .toast.show {
+      opacity: .95;
+      transform: translateX(-50%) translateY(-8px)
+    }
+
+    /* 💰 Bulle Tarif (à droite des onglets) */
+    #tarif-top-bubble {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 0 10px;
+      height: 38px;
+      border-radius: 20px;
+      background: var(--violet);
+      color: #fff;
+      font-size: 16px;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    }
+
+    #tarif-top-bubble .tarif-label {
+      font-size: 14px;
+      font-weight: 600;
+      user-select: none;
+    }
+
+    #tarif-top-bubble .tarif-top-content {
+      position: absolute;
+      top: 46px;
+      left: 100%;
+      margin-left: 10px;
+      background: #fff;
+      color: #111;
+      border-radius: 12px;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+      padding: 12px 16px;
+      min-width: 500px;
+      /* 2 colonnes */
+      z-index: 1000;
+      opacity: 0;
+      transform: translateY(-8px);
+      pointer-events: none;
+      transition: opacity .25s ease, transform .25s ease;
+    }
+
+    #tarif-top-bubble.open .tarif-top-content {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+
+    .tarif-section-title {
+      width: 100%;
+      text-align: center;
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--violet);
+      margin-bottom: 10px;
+      text-transform: uppercase;
+    }
+
+    .tarif-title-green {
+      color: var(--green);
+      font-size: 14px;
+      font-weight: 700;
+      margin: 0 0 6px;
+    }
+
+    .tarif-title-orange {
+      color: var(--orange);
+      font-size: 13px;
+      font-weight: 700;
+      margin: 10px 0 5px;
+    }
+
+    .tarif-separator {
+      height: 1px;
+      background: #e0e0e0;
+      margin: 8px 0 10px;
+      border: none;
+    }
+
+    .tarif-columns {
+      display: flex;
+      justify-content: space-between;
+      gap: 15px;
+    }
+
+    .tarif-col {
+      flex: 1;
+      min-width: 130px
+    }
+
+    .tarif-col ul {
+      list-style: none;
+      margin: 0 0 8px;
+      padding: 0;
+      font-size: 13px
+    }
+
+    .tarif-col li {
+      margin-bottom: 5px;
+      line-height: 1.4
+    }
+
+   /* 🧮 Calculette flottante (sous Tarif) — version corrigée */
+#calc-bubble {
+  position: absolute;
+  top: 100%;
+  left: 100%;
+  margin-left: 10px;
+  margin-top: 10px;
+
+  /* ✅ Fond opaque orange–vert (plus de transparence) */
+  background: linear-gradient(135deg, #ffa94d, #70d58a);
+  color: #111;
+
+  /* ✅ Taille fixe et minimum pour éviter le rétrécissement */
+  width: 520px;
+  min-width: 220px;
+
+  /* ✅ Apparence générale */
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+  padding: 12px;
+  z-index: 999;
+
+  /* ✅ Animation et visibilité */
+  opacity: 0;
+  transform: translateY(-8px);
+  pointer-events: none;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+/* 🔓 Calculette ouverte */
+#calc-bubble.open {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+/* 🧾 Affichage de la calculette */
+#calc-display {
+  width: 100%;
+  padding: 8px;
+  font-size: 16px;
+  margin-bottom: 8px;
+  text-align: right;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+/* 🔢 Boutons */
+.calc-buttons {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+
+.calc-buttons button {
+  padding: 8px;
+  font-size: 15px;
+  border: none;
+  background: #eef2f7;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.calc-buttons button:hover {
+  background: #ddd;
+}
+
+
+   /* === Bouton Calculette Compact & Orange === */
+#calc-toggle-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: none;
+  background: linear-gradient(135deg, #ff9800, #ffb84d);
+  color: #fff; /* emoji / chiffres blancs */
+  font-size: 20px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+  transition: all 0.2s ease-in-out;
+}
+
+/* Effet de survol */
+#calc-toggle-btn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.25);
+  background: linear-gradient(135deg, #ff8c00, #ffd180);
+}
+
+    /* 📱 Responsive : bulles centrées en mobile */
+    @media (max-width: 640px) {
+
+      #tarif-top-bubble .tarif-top-content,
+      #calc-bubble {
+        left: 50% !important;
+        margin-left: 0 !important;
+        transform: translate(-50%, -8px);
+        min-width: min(520px, 96vw);
+        width: 96vw;
+      }
+
+      #tarif-top-bubble.open .tarif-top-content {
+        transform: translate(-50%, 0);
+      }
+
+      #calc-bubble.open {
+        transform: translate(-50%, 0);
+      }
+    }
+    /* ===== Position et style des lignes "Prochaine réservation" ===== */
+.next-reservations {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;  /* aligne à gauche */
+  justify-content: flex-start;
+  width: 100%;              /* occupe toute la largeur dispo */
+  margin-top: 10px;
+  gap: 4px;                 /* petit espace entre les trois lignes */
+}
+
+.next-line {
+  display: block;
+  width: 100%;
+  white-space: normal;      /* texte complet visible */
+  overflow: visible;
+  text-overflow: unset;
+  padding: 4px 8px;
+  box-sizing: border-box;
+  font-size: 14px;
+  font-weight: 500;
+}
+/* === Calculette en dégradé orange–vert doux (style Réservations) === */
+#calc-bubble {
+  background: linear-gradient(135deg, rgba(255,169,77,0.9), rgba(112,213,138,0.9));
+  backdrop-filter: blur(6px);
+  color: #111;
+  border: 1px solid rgba(255,255,255,0.4);
+}
+
+/* L’écran d’affichage de la calculette */
+#calc-display {
+  border: 1px solid rgba(255,255,255,0.5);
+  background: rgba(255,255,255,0.25);
+  color: #111;
+}
+
+/* Boutons internes assortis */
+.calc-buttons button {
+  background: rgba(255,255,255,0.35);
+  color: #111;
+  font-weight: 600;
+  border-radius: 10px;
+  transition: all 0.2s ease;
+}
+
+.calc-buttons button:hover {
+  background: rgba(255,255,255,0.55);
+}
+/* --- Correction du bouton À PAYER --- */
+#aPayer {
+  background: linear-gradient(135deg, rgba(255,150,50,1), rgba(112,213,138,1)) !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important; /* pour iPhone/iPad/Safari */
+  font-weight: 600;
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+/* === Paiement Lift Express (icônes cash / wero) === */
+.pay-icons {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 6px;
+}
+
+.pay-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
+
+.pay-btn:hover {
+  transform: scale(1.1);
+}
+
+.pay-btn.selected {
+  border-color: #6d28d9;
+  box-shadow: 0 0 0 2px #6d28d9 inset;
+}
+
+.pay-btn.hidden {
+  display: none;
+}
+
+.pay-btn img {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+}
+
+  </style>
+
+  <!-- ✅ Firebase SDK (exposé global) -->
+  <script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+
+  import {
+    getDatabase,
+    ref,
+    push,
+    update,
+    remove,
+    onValue,
+    query,
+    orderByChild,
+    startAt,
+    endAt,
+    get
+  } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyC5Rly--5aw3vSEuhRcyZxzD5fg1JJowbE",
+      authDomain: "lift-agenda-app.firebaseapp.com",
+      databaseURL: "https://lift-agenda-app-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "lift-agenda-app",
+      storageBucket: "lift-agenda-app.firebasestorage.app",
+      messagingSenderId: "162981688841",
+      appId: "1:162981688841:web:8ceee20cd7500aedb1ead8"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    window.db = db;
+
+    // Helpers globaux
+    window.firebaseRef = ref;
+    window.firebasePush = push;
+    window.firebaseUpdate = update;
+    window.firebaseRemove = remove;
+    window.firebaseOnValue = onValue;
+    window.firebaseQuery = query;
+    window.firebaseOrderByChild = orderByChild;
+    window.firebaseStartAt = startAt;
+    window.firebaseEndAt = endAt;
+    window.firebaseGet = get;
+
+  </script>
+
+ <!-- ✅ PWA Manifest -->
+<link rel="manifest" href="https://lift-agenda-team.netlify.app/manifest.json">
+
+<!-- ✅ Icônes -->
+<link rel="icon" href="https://lift-agenda-team.netlify.app/favicon.ico" type="image/x-icon">
+<link rel="apple-touch-icon" sizes="192x192" href="https://lift-agenda-team.netlify.app/icons/icon-maskable-192.png">
+<link rel="apple-touch-icon" sizes="512x512" href="https://lift-agenda-team.netlify.app/icons/icon-maskable-512.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="white">
+
+
+<!-- ✅ Splash screen iOS -->
+<link rel="apple-touch-startup-image" href="https://lift-agenda-team.netlify.app/splash.png">
+
+<!-- ✅ Couleurs du thème -->
+<meta name="theme-color" content="#ffffff">
+<meta name="background-color" content="#ffffff">
+
+<!-- ✅ Force fond blanc même en mode sombre -->
+<style>
+  @media (prefers-color-scheme: dark) {
+    body {
+      background-color: #ffffff !important;
+      color: #000000 !important;
+    }
+  }
+  /* Empiler les boutons d'action (Modifier / Supprimer) */
+.actions {
+  display: flex;
+  flex-direction: column; /* les met l’un au-dessus de l’autre */
+  align-items: flex-end; /* les garde alignés à droite */
+  gap: 6px; /* petit espace entre les deux boutons */
+}
+
+/* Optionnel : légèrement plus serré sur mobile */
+@media (max-width: 768px) {
+  .actions {
+    gap: 4px;
+  }
+}
+/* === Réservations marbré orange-vert === */
+.tab-dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.tab-btn[data-tab="reservations"] {
+  background: linear-gradient(135deg, #ffa94d, #70d58a);
+  color: #fff;
+  font-weight: 700;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  transition: transform .2s, box-shadow .2s, opacity .2s;
+}
+
+.tab-btn[data-tab="reservations"]:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+
+/* === Menu déroulant marbré doux === */
+.dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background: linear-gradient(135deg, rgba(255,169,77,0.95), rgba(112,213,138,0.95));
+  backdrop-filter: blur(6px);
+  border-radius: 12px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.15);
+  padding: 6px;
+  display: none;
+  flex-direction: column;
+  z-index: 1000;
+  animation: fadeSlide .25s ease forwards;
+}
+
+.dropdown-item {
+  background: rgba(255,255,255,0.25);
+  color: #111;
+  border: none;
+  border-radius: 10px;
+  padding: 8px 14px;
+  margin: 4px 0;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  transition: background .2s, transform .1s;
+}
+
+.dropdown-item:hover {
+  background: rgba(255,255,255,0.45);
+  transform: translateX(2px);
+}
+
+@keyframes fadeSlide {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+html {
+  scroll-behavior: smooth;
+}
+
+</style>
+
+
+
+</head>
+
+<body>
+  <!-- 🔹 En-tête simplifié avec bouton Calculateur -->
+<div class="header-top" style="
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+">
+
+  <!-- Titre simplifié -->
+  <h1 style="
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0;
+    color: #222;
+  ">
+    Agenda
+  </h1>
+<a id="btnCalculateur" href="#calcul" style="display:inline-block;
+  background:linear-gradient(135deg,#4d6539,#ffb347,#c084fc);
+  color:#fff;
+  font-weight:400;
+  padding:3px 9px;
+  border-radius:5px;
+  text-decoration:none;
+  font-size:12.5px;
+  box-shadow:0 2px 4px rgba(0,0,0,0.15);
+  transition:all .25s ease;"
+  onmouseover="this.style.opacity='0.9'"
+  onmouseout="this.style.opacity='1'">
+  Calculateur
+</a>
+
+
+
+</div>
+
+
+    <div class="tabs">
+      <div class="tab-dropdown">
+      <button class="tab-btn active" data-tab="reservations" id="reservationsBtn">
+        Réservations ▼
+      </button>
+    <div class="dropdown-menu" id="reservationsMenu">
+      <button class="dropdown-item" id="btnWeekView">Agenda semaine</button>
+    </div>
+   </div>
+
+      <div class="tab-dropdown">
+  <button class="tab-btn" data-tab="admin" id="adminBtn">
+    Admin ▼
+  </button>
+  <div class="dropdown-menu" id="adminMenu">
+    <!-- Bouton 📝 .net -->
+<button class="dropdown-item" onclick="window.open(&#39;https://www.facture.net/389480/dashboard/accounting_files&#39;, &#39;_blank&#39;)" style="display:flex;flex-direction:column;align-items:center;padding:4px;">
+    <img src="./Agenda — Réservations_files/facture.png" alt="Facture.net" style="width:48px;height:48px;">
+  </button>
+
+    <button class="dropdown-item" id="btnProAlphabet" title="Fiches PRO non encodées" style="display:flex;align-items:center;justify-content:center;padding:4px;">
+  <img src="./Agenda — Réservations_files/pro-icon.jpeg" alt="PRO" style="width:34px;height:34px;border-radius:6px;transition:transform 0.2s ease;">
+</button>
+
+
+
+    <!-- @info (info) -->
+ <button class="dropdown-item" onclick="window.open(&#39;https://mail.google.com/mail/u/0/#inbox&#39;, &#39;_blank&#39;)" style="display:flex;flex-direction:column;align-items:center;padding:4px;">
+    <img src="./Agenda — Réservations_files/lift_info.png" alt="#Lift info" style="width:48px;height:48px;">
+  </button>
+
+<!-- @pro (vert) -->
+<button class="dropdown-item" onclick="window.open(&#39;https://mail.google.com/mail/u/1/#inbox&#39;, &#39;_blank&#39;)" style="display:flex;flex-direction:column;align-items:center;padding:4px;">
+    <img src="./Agenda — Réservations_files/lift_pro.png" alt="#Lift pro" style="width:48px;height:48px;">
+  </button>
+
+  </div>
+</div>
+
+
+      <!-- 💰 Bulle Tarif -->
+      <div id="tarif-top-bubble" title="Afficher le tarif">
+        💰 <span class="tarif-label">Tarif</span>
+        <div class="tarif-top-content">
+          <h4 class="tarif-section-title">TARIF</h4>
+
+          <div class="tarif-columns">
+            <!-- Colonne PRO -->
+            <div class="tarif-col">
+              <h5 class="tarif-title-green">PRO à facturer</h5>
+              <ul>
+                <li>one shot : 67€ / 81,70€</li>
+                <li>30m  : 80€ / 96,80€</li>
+                <li>60m  : 100€ / 121€</li>
+                <li>1h15 : 115€ / 139,15€</li>
+                <li>1h30 : 130€ / 157,30€</li>
+                <li>2h   : 160€ / 193,60€</li>
+              </ul>
+
+              <hr class="tarif-separator">
+
+              <h6 class="tarif-title-orange">PRIX PROS hors tva</h6>
+              <ul>
+                <li>Ac Sprimont : 100e</li>
+                <li>Carp N Cristel : 83e </li>
+                <li>Cottage Immo : 83e </li>
+                <li>Garcia : 83e </li>
+                <li>HBK 70,25e </li>
+                <li>MK Renove:  83e</li>
+              </ul>
+            </div>
+
+            <!-- Colonne PART -->
+            <div class="tarif-col">
+              <h5 class="tarif-title-orange">PART TTC </h5>
+              <ul>
+                <li>One shot : 85€</li>
+                <li>30m  : 100€</li>
+                <li>60m  : 130€</li>
+                <li>1h15 : 150€</li>
+                <li>1h30 : 165€</li>
+                <li>2h   : 195€</li>
+              </ul>
+
+              <hr class="tarif-separator">
+
+              <h6 class="tarif-title-orange">PRIX PROS hors tva</h6>
+              <ul>
+                <li>Polybel : 90e</li>
+                <li>St Rock : 115e</li>
+                <li>............</li>
+                <li>.............</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+     <!-- Bouton Calculette carré orange -->
+<button id="calc-toggle-btn" title="Calculette" aria-label="Calculette">
+  <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none">
+    <!-- carré orange -->
+    <rect x="2" y="2" width="20" height="20" rx="4" fill="#ff9800"></rect>
+    <!-- chiffres blancs, plus grands -->
+    <text x="5" y="12" font-size="8" fill="white" font-family="Arial, sans-serif" font-weight="700">12</text>
+    <text x="5" y="20" font-size="8" fill="white" font-family="Arial, sans-serif" font-weight="700">34</text>
+  </svg>
+</button>
+
+
+<div id="calc-bubble" aria-label="Calculette">
+  <input type="text" id="calc-display" readonly="">
+  <div class="calc-buttons">
+    <button>7</button><button>8</button><button>9</button><button>/</button>
+    <button>4</button><button>5</button><button>6</button><button>*</button>
+    <button>1</button><button>2</button><button>3</button><button>-</button>
+    <button>0</button><button>.</button><button>C</button><button>+</button>
+    <button style="grid-column: span 4;">=</button>
+  </div>
+</div> <!-- ✅ fermeture calculette -->
+
+<!-- 🌐 Bouton Localift (ouvre un nouvel onglet) -->
+<!-- 🌐 Bouton Localift (ouvre un nouvel onglet) -->
+<button onclick="window.open(&#39;https://calendrier.loca-lift.net/calendrier3/restricted/calendar.php?company=1&#39;, &#39;_blank&#39;)" style="margin-left:auto; background:#e74c3c; color:#fff; font-weight:600; border:none; border-radius:12px; padding:10px 14px; cursor:pointer; box-shadow:0 2px 6px rgba(0,0,0,0.15);">
+  Localift 🌐
+</button>
+
+
+</div> <!-- ✅ fermeture du conteneur principal (.tabs) -->
+
+<!-- ===== Onglet Réservations ===== -->
+<div class="tab-panel active" id="tab-reservations">
+
+      <div class="card">
+        <!-- Date + Heures -->
+        <div class="row">
+          <div style="flex:1;min-width:180px">
+            <label class="small">Date</label>
+            <input type="date" id="datePicker">
+          </div>
+          <div style="flex:2;min-width:260px;display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div>
+              <label class="small">Début</label>
+              <input type="time" id="startTime" step="900">
+            </div>
+            <div>
+              <label class="small">Fin</label>
+              <input type="time" id="endTime" step="900">
+            </div>
+          </div>
+        </div>
+
+        <!-- Types -->
+        <div class="row type-buttons" id="typeButtons">
+          <button class="type-btn type-LFT active" data-type="LFT"># LIFT</button>
+          <button class="type-btn type-EXP" data-type="EXP">LIFT EXPRESS</button>
+          <button class="type-btn type-PER" data-type="PER">RDV PERSO</button>
+          <button class="type-btn type-PAU" data-type="PAU">PAUSE</button>
+        </div>
+
+        
+        <!-- 💶 PRO / PART + À PAYER -->
+<div class="row" style="align-items:center; display:flex; gap:8px; flex-wrap:wrap;">
+  <button class="pp-btn" id="btnPro">PRO</button>
+  <button class="pp-btn" id="btnPart">PART</button>
+
+  <!-- Champ À payer (caché par défaut, visible uniquement pour LIFT EXPRESS) -->
+  <input type="number" id="aPayer" step="0.01" min="0" max="999" inputmode="decimal" placeholder="A payer" style="
+      background: linear-gradient(135deg, rgba(255,150,50,1), rgba(112,213,138,1));
+      color:#ffffff !important;
+      font-weight:600;
+      font-size:15px;
+      border:none;
+      border-radius:10px;
+      padding:6px 10px;
+      width:90px;
+      text-align:center;
+      font-family:inherit;
+      transition:all .2s ease;
+      box-shadow:0 2px 5px rgba(0,0,0,0.15);
+      opacity:0.95;
+      display:none; /* 👈 cette ligne est essentielle */
+    ">
+     <input type="number" id="prixLFT" step="0.01" min="0" max="999" inputmode="decimal" placeholder="Prix" style="
+    background: linear-gradient(135deg, rgba(112,213,138,1), rgba(153,102,255,0.9));
+    color:#ffffff;
+    color:#ffffff !important;
+    -webkit-text-fill-color:#ffffff !important;
+
+    font-weight:600;
+    font-size:15px;
+    border:none;
+    border-radius:10px;
+    padding:6px 10px;
+    width:90px;
+    text-align:center;
+    display:none;
+  ">
+
+</div>
+
+
+
+
+
+        <!-- Raccourcis -->
+        <div class="row">
+          <span class="pill" id="btnNote">NOTE</span>
+          <span class="pill" id="btnFacture">FACTURE</span>
+          <span class="pill" id="btnAdresse">ADRESSE</span>
+          <span class="pill" id="indVF">V(F)</span>
+          <span class="pill" id="indVP">V(P)</span>
+        </div>
+
+        <!-- NOTE -->
+        <div class="fieldset" id="noteBox" style="display:none">
+          <legend>Note</legend>
+          <textarea id="note" rows="3"></textarea>
+        </div>
+
+        <!-- FACTURE -->
+        <div class="fieldset" id="factureBox" style="display:none">
+          <legend>Facturation</legend>
+
+          <div class="row">
+            <div style="flex:1;min-width:150px">
+              <label class="small">Type de client</label>
+              <select id="factureType">
+                <option value="">-- Choisir --</option>
+                <option value="PRO">PRO</option>
+                <option value="PART">PART</option>
+              </select>
+            </div>
+            <div style="flex:1;min-width:150px">
+              <label class="small">Statut client</label>
+              <select id="factureStatus">
+                <option value="">-- Choisir --</option>
+                <option value="Déjà encodé">Déjà encodé</option>
+                <option value="Pas encodé">Pas encodé</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- PRO -->
+          <div id="factureProBlock" style="display:none">
+            <!-- Encodé -->
+            <div id="proEncoded" style="display:none">
+              <div class="row">
+                <div style="flex:1">
+                  <label class="small">Nom de la firme</label>
+                  <input type="text" id="factureProNom">
+                </div>
+                <div style="flex:1">
+                  <label class="small">Mode de paiement</label>
+                  <select id="factureProPay">
+                    <option value="">-- Choisir --</option>
+                    <option value="wero">Wero</option>
+                    <option value="Virement">Virement</option>
+                    <option value="Espèces">Espèces</option>
+                    <option value="Non payé">Non payé</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            <!-- Pas encodé -->
+<div id="proNotEncoded" style="display:none">
+  <div class="row">
+    <div style="flex:1">
+      <label class="small">Nom de la firme</label>
+      <input type="text" id="factureProNom2">
+    </div>
+    <div style="flex:1">
+      <label class="small">Rue</label>
+      <input type="text" id="factureProRue">
+    </div>
+  </div>
+
+  <div class="row">
+    <div style="flex:1">
+      <label class="small">N° TVA</label>
+      <input type="text" id="factureProTVA">
+    </div>
+    <div style="flex:1">
+      <label class="small">Mode de paiement</label>
+      <select id="factureProPay2">
+        <option value="">-- Choisir --</option>
+        <option value="Wero">Wero</option>
+        <option value="Virement">Virement</option>
+        <option value="Espèces">Espèces</option>
+        <option value="Non payé">Non payé</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- 🟩 Ajout Téléphone + E-mail -->
+  <div class="row">
+    <div style="flex:1">
+      <label class="small">Téléphone</label>
+      <input type="tel" id="factureProTel">
+    </div>
+    <div style="flex:1">
+      <label class="small">E-mail</label>
+      <input type="email" id="factureProMail">
+    </div>
+  </div>
+</div>
+
+          </div>
+
+          <!-- PART -->
+          <div id="facturePartBlock" style="display:none">
+            <!-- Encodé -->
+            <div id="partEncoded" style="display:none">
+              <div class="row">
+                <div style="flex:1">
+                  <label class="small">Prénom</label>
+                  <input type="text" id="facturePartPrenom">
+                </div>
+                <div style="flex:1">
+                  <label class="small">Nom</label>
+                  <input type="text" id="facturePartNom">
+                </div>
+              </div>
+              <div class="row">
+                <div style="flex:1">
+                  <label class="small">Mode de paiement</label>
+                  <select id="facturePartPay">
+                    <option value="">-- Choisir --</option>
+                    <option value="wero">Wero</option>
+                    <option value="Virement">Virement</option>
+                    <option value="Espèces">Espèces</option>
+                    <option value="Non payé">Non payé</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          <!-- Pas encodé -->
+<div id="partNotEncoded" style="display:none">
+  <div class="row">
+    <div style="flex:1">
+      <label class="small">Prénom</label>
+      <input type="text" id="facturePartPrenom2">
+    </div>
+    <div style="flex:1">
+      <label class="small">Nom</label>
+      <input type="text" id="facturePartNom2">
+    </div>
+  </div>
+
+  <div class="row">
+    <div style="flex:1">
+      <label class="small">Adresse</label>
+      <input type="text" id="facturePartAdresse">
+    </div>
+    <div style="flex:1">
+      <label class="small">Mode de paiement</label>
+      <select id="facturePartPay2">
+        <option value="">-- Choisir --</option>
+        <option value="Wero">Wero</option>
+        <option value="Virement">Virement</option>
+        <option value="Espèces">Espèces</option>
+        <option value="Non payé">Non payé</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- 🟩 Ajout Téléphone + E-mail -->
+  <div class="row">
+    <div style="flex:1">
+      <label class="small">Téléphone</label>
+      <input type="tel" id="facturePartTel">
+    </div>
+    <div style="flex:1">
+      <label class="small">E-mail</label>
+      <input type="email" id="facturePartMail">
+    </div>
+  </div>
+</div>
+
+          </div>
+        </div>
+
+        <!-- ADRESSE -->
+        <div class="fieldset" id="adresseBox" style="display:none">
+          <legend>Adresse</legend>
+          <input type="text" id="adresse" placeholder="Rue / CP / Ville">
+        </div>
+
+        <!-- Actions -->
+        <div class="row" style="justify-content:flex-end">
+          <button class="btn-secondary" id="btnCancelEdit" style="display:none">Annuler</button>
+          <button class="btn-primary" id="btnSave">Ajouter la réservation</button>
+        </div>
+      </div>
+      <!-- 🟩🟥🟦 Indicateurs prochaines réservations -->
+  <div class="next-rdv-box" style="margin: 10px 0; text-align: right;">
+   <div id="next-exp" class="rdv-red">• Prochaine LIFT EXPRESS : 2025-11-12 08:00</div>
+   <div id="next-lft" class="rdv-green">• Prochaine #LIFT : 2025-11-29 08:00</div>
+   <div id="next-per" class="rdv-orange">• Prochain RDV perso : —</div>
+  </div>
+
+
+      <!-- Liste du jour -->
+      <div class="card">
+        <h3 style="margin:0 0 8px">Réservations du jour</h3>
+        <div id="list"></div>
+        <div id="empty" class="muted" style="text-align: center; display: block;">Aucune réservation pour cette date.</div>
+      </div>
+    <div id="weekView" class="card" style="display: none;">
+  <h3 style="margin-top:0">🗓️ Agenda de la semaine</h3>
+  <div id="weekList"></div>
+</div></div>
+
+    <!-- ===== Onglet Admin ===== -->
+    <div class="tab-panel" id="tab-admin">
+      <div class="card">
+        <div class="row">
+          <div style="flex:1;min-width:220px">
+            <label class="small">Mois</label>
+            <input type="month" id="monthPicker">
+          </div>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 6px; margin: 12px 0px;">
+  📅 <label for="exportStart">Du :</label>
+  <input type="date" id="exportStart" style="padding:4px;">
+  <label for="exportEnd">au :</label>
+  <input type="date" id="exportEnd" style="padding:4px;">
+  <button id="btnExportRangeEXP" class="btn-secondary">📥 LIFT EXPRESS</button>
+  <button id="btnExportRangeLFT" class="btn-secondary">📥 #LIFT</button>
+</div><h3 class="admin-h3">LIFT EXPRESS</h3>
+        <table class="admin-table row-color-exp">
+            <thead>
+             <tr>
+               <th>Date</th>
+               <th>Heures</th>
+               <th>Client</th>
+               <th>Adresse</th>
+               <th>Facture</th>
+               <th>VF</th>
+               <th>VP</th>
+               <th>Somme (€)</th>
+               <th>Actions</th>
+              </tr>
+             </thead>
+
+          <tbody id="adminEXP"><tr data-row-id="-OdEpHT7BHjGa9ftRqrr">
+  <td>2025-11-05</td>
+  <td>08:30–09:00</td>
+  <td>PRO</td>
+  <td>(ÉTAGE 8 ISOLETANCHE SRL PLACE BROSSOLETTE 6, SERAING, BELGIQUE BE | 4101 JEMEPPE-SUR-MEUSE</td>
+  <td></td>
+  <td></td>
+  <td></td>
+  <td style="display:flex; align-items:center; gap:6px;">
+
+  <input type="number" class="admin-somme" value="" step="0.01" min="0" inputmode="decimal" style="width:90px;text-align:right;color:black" data-id="-OdEpHT7BHjGa9ftRqrr">
+
+  
+
+</td>
+
+  <td>
+    <button class="btn-secondary" data-etype="edit" data-eid="-OdEpHT7BHjGa9ftRqrr">✏️</button>
+    <button class="btn-danger" data-etype="del" data-eid="-OdEpHT7BHjGa9ftRqrr">🗑️</button>
+  </td>
+</tr><tr data-row-id="-OdS0Ol2xDns8G5CmGSi">
+  <td>2025-11-08</td>
+  <td>09:30–10:00</td>
+  <td>PRO</td>
+  <td>ÉTAGE 6 BOTTZ SPRL AVENUE BLONDEN 48, LIÈGE</td>
+  <td>PRO</td>
+  <td></td>
+  <td></td>
+  <td style="display:flex; align-items:center; gap:6px;">
+
+  <input type="number" class="admin-somme" value="" step="0.01" min="0" inputmode="decimal" style="width:90px;text-align:right;color:black" data-id="-OdS0Ol2xDns8G5CmGSi">
+
+  
+
+</td>
+
+  <td>
+    <button class="btn-secondary" data-etype="edit" data-eid="-OdS0Ol2xDns8G5CmGSi">✏️</button>
+    <button class="btn-danger" data-etype="del" data-eid="-OdS0Ol2xDns8G5CmGSi">🗑️</button>
+  </td>
+</tr><tr data-row-id="-OdYslSpHmBJ2wCX1AiF">
+  <td>2025-11-12</td>
+  <td>08:00–09:00</td>
+  <td>PRO</td>
+  <td>ETAGE 4 PROTOITURES SA CHAUSSÉE DE TONGRES 269, ROCOURT</td>
+  <td>PRO</td>
+  <td></td>
+  <td></td>
+  <td style="display:flex; align-items:center; gap:6px;">
+
+  <input type="number" class="admin-somme" value="" step="0.01" min="0" inputmode="decimal" style="width:90px;text-align:right;color:black" data-id="-OdYslSpHmBJ2wCX1AiF">
+
+  
+
+</td>
+
+  <td>
+    <button class="btn-secondary" data-etype="edit" data-eid="-OdYslSpHmBJ2wCX1AiF">✏️</button>
+    <button class="btn-danger" data-etype="del" data-eid="-OdYslSpHmBJ2wCX1AiF">🗑️</button>
+  </td>
+</tr><tr data-row-id="-OdbyywTZsW75_G6FVeu">
+  <td>2025-11-14</td>
+  <td>08:30–09:00</td>
+  <td>PRO</td>
+  <td>ÉTAGE 1 EASY INSTALL BVBA ST.-TRUIDERSTEENWEG 468, TONGEREN-3840 BORGLOON</td>
+  <td>PRO</td>
+  <td></td>
+  <td></td>
+  <td style="display:flex; align-items:center; gap:6px;">
+
+  <input type="number" class="admin-somme" value="" step="0.01" min="0" inputmode="decimal" style="width:90px;text-align:right;color:black" data-id="-OdbyywTZsW75_G6FVeu">
+
+  
+
+</td>
+
+  <td>
+    <button class="btn-secondary" data-etype="edit" data-eid="-OdbyywTZsW75_G6FVeu">✏️</button>
+    <button class="btn-danger" data-etype="del" data-eid="-OdbyywTZsW75_G6FVeu">🗑️</button>
+  </td>
+</tr></tbody>
+
+          <tfoot>
+            <tr>
+              <td colspan="9" id="totalEXP" style="font-weight:700; text-align:right;">🟥 VP: 0.00 € — ⚫️ Non-VP: 0.00 €</td>
+            </tr>
+          </tfoot>
+          </table>
+
+       
+
+        <h3 class="admin-h3" style="margin-top:16px"># LIFT</h3>
+        <table class="admin-table row-color-lft">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Heures</th>
+              <th>Client</th>
+              <th>Adresse</th>
+              <th>Facture</th>
+              <th>VF</th>
+              <th>VP</th>
+              <th>Somme (€)</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="adminLFT"><tr data-row-id="-Od2eLxtIOAlgSxMnMxS">
+  <td>2025-11-02</td>
+  <td>10:30–11:30</td>
+  <td>PART</td>
+  <td>FLO 100 SPRIMONT</td>
+  <td>PART</td>
+  <td>✔️</td>
+  <td>✔️</td>
+  <td style="display:flex; align-items:center; gap:6px;">
+
+  <input type="number" class="admin-somme" value="" step="0.01" min="0" inputmode="decimal" style="width:90px;text-align:right;color:red" data-id="-Od2eLxtIOAlgSxMnMxS">
+
+  
+
+</td>
+
+  <td>
+    <button class="btn-secondary" data-etype="edit" data-eid="-Od2eLxtIOAlgSxMnMxS">✏️</button>
+    <button class="btn-danger" data-etype="del" data-eid="-Od2eLxtIOAlgSxMnMxS">🗑️</button>
+  </td>
+</tr><tr data-row-id="-OcbFZj8KtMiLUb9CXrn">
+  <td>2025-11-03</td>
+  <td>07:00–09:00</td>
+  <td>PRO</td>
+  <td>RUE DE LA GARE 12 MALMEDY</td>
+  <td>PRO</td>
+  <td></td>
+  <td></td>
+  <td style="display:flex; align-items:center; gap:6px;">
+
+  <input type="number" class="admin-somme" value="" step="0.01" min="0" inputmode="decimal" style="width:90px;text-align:right;color:black" data-id="-OcbFZj8KtMiLUb9CXrn">
+
+  
+
+</td>
+
+  <td>
+    <button class="btn-secondary" data-etype="edit" data-eid="-OcbFZj8KtMiLUb9CXrn">✏️</button>
+    <button class="btn-danger" data-etype="del" data-eid="-OcbFZj8KtMiLUb9CXrn">🗑️</button>
+  </td>
+</tr><tr data-row-id="-OdT0o27lER_0OfNeznN">
+  <td>2025-11-29</td>
+  <td>08:00–10:00</td>
+  <td>PART</td>
+  <td>LIÈGE (4030), RUE DU BEAU MUR, 54 1IER ÉTAGE AU DESSUS GARAGE PALATE ET PUIS 2ÉTAGE  RUE DU VALLON 1B /022 4900 ANGLEUR</td>
+  <td>Bernard Georis</td>
+  <td></td>
+  <td></td>
+  <td style="display:flex; align-items:center; gap:6px;">
+
+  <input type="number" class="admin-somme" value="" step="0.01" min="0" inputmode="decimal" style="width:90px;text-align:right;color:black" data-id="-OdT0o27lER_0OfNeznN">
+
+  
+
+</td>
+
+  <td>
+    <button class="btn-secondary" data-etype="edit" data-eid="-OdT0o27lER_0OfNeznN">✏️</button>
+    <button class="btn-danger" data-etype="del" data-eid="-OdT0o27lER_0OfNeznN">🗑️</button>
+  </td>
+</tr></tbody>
+
+          <tfoot>
+            <tr>
+              <td colspan="9" id="totalLFT" style="font-weight:700; text-align:right;">🟥 VP: 0.00 € — ⚫️ Non-VP: 0.00 €</td>
+            </tr>
+          </tfoot>
+          </table>
+<!-- ======= CORBEILLE ======= -->
+<h3 class="admin-h3" style="margin-top:30px;">🗑️ Corbeille</h3>
+
+<table class="table-res">
+  <thead>
+    <tr>
+      <th>Date</th>
+      <th>Heure</th>
+      <th>Client</th>
+      <th>Type</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+
+  <tbody id="adminTrash"></tbody>
+</table>
+
+
+        
+      </div>
+    </div>
+  </div>
+   <!-- ===== Page PRO Pas encore encodés ===== -->
+<div class="tab-panel" id="tab-proalphabet">
+  <div class="card">
+    <h3 class="admin-h3">📇 Fiches PRO — Pas encore encodées</h3>
+    <div id="proList" class="muted">Chargement...</div>
+  </div>
+</div>
+
+  <div class="toast" id="toast"></div>
+  <!-- ===== Script principal ===== -->
+  <script type="module">
+// Aliases Firebase exposés globalement depuis le <head>
+const db             = window.db;
+const ref            = window.firebaseRef;
+const push           = window.firebasePush;
+const update         = window.firebaseUpdate;
+const remove         = window.firebaseRemove;
+const onValue        = window.firebaseOnValue;
+const query          = window.firebaseQuery;
+const orderByChild   = window.firebaseOrderByChild;
+const startAt        = window.firebaseStartAt;
+const endAt          = window.firebaseEndAt;
+const get            = window.firebaseGet;
+
+
+  
+
+    /* Utils */
+    const $ = s => document.querySelector(s), $$ = s => document.querySelectorAll(s);
+    const toast = $("#toast");
+    const toHM = v => (v || "").slice(0, 5);
+    const badge = t => ({ EXP: "bEXP", LFT: "bLFT", PER: "bPER", PAU: "bPAU" }[t] || "bLFT");
+    const showToast = (m, b = "#111827") => {
+      toast.textContent = m;
+      toast.style.background = b;
+      toast.classList.add("show");
+      setTimeout(() => toast.classList.remove("show"), 1800);
+    };
+
+    /* Onglets */
+    $$(".tab-btn").forEach(b => b.addEventListener("click", () => {
+      $$(".tab-btn").forEach(x => x.classList.remove("active")); b.classList.add("active");
+      $$(".tab-panel").forEach(p => p.classList.remove("active")); $("#tab-" + b.dataset.tab).classList.add("active");
+    }));
+
+    /* Etat formulaire */
+    let selectedType = "LFT", selectedClient = null, editingId = null;
+    $("#datePicker").value = new Date().toISOString().split("T")[0];
+
+    // Types
+$$(".type-btn").forEach(btn => btn.addEventListener("click", () => {
+  $$(".type-btn").forEach(x => x.classList.remove("active"));
+  btn.classList.add("active");
+  selectedType = btn.dataset.type;
+
+  // 💶 Affichage du champ "À payer" uniquement pour LIFT EXPRESS
+  const aPayerInput = document.getElementById("aPayer");
+  if (selectedType === "EXP") {
+    aPayerInput.style.display = "inline-block";
+  } else {
+    aPayerInput.style.display = "none";
+  }
+  const prixLFT = document.getElementById("prixLFT");
+
+if (selectedType === "LFT") {
+    prixLFT.style.display = "inline-block";
+} else {
+    prixLFT.style.display = "none";
+}
+
+}));
+
+
+    // PRO / PART (ne pas ouvrir facture auto)
+    const btnPro = $("#btnPro"), btnPart = $("#btnPart");
+    function setClient(v) {
+      selectedClient = v;
+      btnPro.classList.toggle("active", v === "PRO");
+      btnPart.classList.toggle("active", v === "PART");
+      $("#factureType").value = v || "";
+      updateFactureUI();
+    }
+    btnPro.addEventListener("click", () => setClient("PRO"));
+    btnPart.addEventListener("click", () => setClient("PART"));
+
+    // Ouverture manuelle Facture
+    $("#btnFacture").addEventListener("click", () => {
+      const box = $("#factureBox");
+      const willOpen = (box.style.display !== "block");
+      box.style.display = willOpen ? "block" : "none";
+      if (willOpen && selectedClient) { $("#factureType").value = selectedClient; }
+      updateFactureUI();
+    });
+
+    // NOTE / ADRESSE / Indicateurs
+    const toggle = sel => {
+      const el = $(sel);
+      el.style.display = (el.style.display === "none" || !el.style.display) ? "block" : "none";
+    };
+    $("#btnNote").addEventListener("click", () => toggle("#noteBox"));
+    $("#btnAdresse").addEventListener("click", () => toggle("#adresseBox"));
+    $("#indVF").addEventListener("click", () => $("#indVF").classList.toggle("violet"));
+    $("#indVP").addEventListener("click", () => $("#indVP").classList.toggle("violet"));
+
+    // Facture UI — logique "encodé / pas encodé"
+    $("#factureType").addEventListener("change", e => {
+      const val = e.target.value;
+      if (val === "PRO" || val === "PART") { setClient(val); }
+      updateFactureUI();
+    });
+    $("#factureStatus").addEventListener("change", updateFactureUI);
+
+    function updateFactureUI() {
+      const t = $("#factureType").value;
+      const s = $("#factureStatus").value;
+
+      $("#factureProBlock").style.display = (t === "PRO") ? "block" : "none";
+      $("#facturePartBlock").style.display = (t === "PART") ? "block" : "none";
+
+      // PRO
+      if (t === "PRO") {
+        if (s === "Déjà encodé") {
+          $("#proEncoded").style.display = "block";
+          $("#proNotEncoded").style.display = "none";
+        } else if (s === "Pas encodé") {
+          $("#proEncoded").style.display = "none";
+          $("#proNotEncoded").style.display = "block";
+        } else {
+          $("#proEncoded").style.display = "none";
+          $("#proNotEncoded").style.display = "none";
+        }
+      } else {
+        $("#proEncoded").style.display = "none";
+        $("#proNotEncoded").style.display = "none";
+      }
+
+      // PART
+      if (t === "PART") {
+        if (s === "Déjà encodé") {
+          $("#partEncoded").style.display = "block";
+          $("#partNotEncoded").style.display = "none";
+        } else if (s === "Pas encodé") {
+          $("#partEncoded").style.display = "none";
+          $("#partNotEncoded").style.display = "block";
+        } else {
+          $("#partEncoded").style.display = "none";
+          $("#partNotEncoded").style.display = "none";
+        }
+      } else {
+        $("#partEncoded").style.display = "none";
+        $("#partNotEncoded").style.display = "none";
+      }
+    }
+
+    // Construire l'objet facture selon champs visibles
+function getFacture() {
+  const type = $("#factureType").value,
+        status = $("#factureStatus").value;
+  if (!type) return null;
+  const val = { type, status };
+
+  // --- PRO ---
+  if (type === "PRO") {
+    if (status === "Déjà encodé") {
+      val.nom = $("#factureProNom").value;
+      val.paiement = $("#factureProPay").value;
+    } else if (status === "Pas encodé") {
+      val.nom = $("#factureProNom2").value;
+      val.rue = $("#factureProRue").value;
+      val.tva = $("#factureProTVA").value;
+      val.paiement = $("#factureProPay2").value;
+      val.telephone = $("#factureProTel").value;
+      val.email = $("#factureProMail").value;
+    }
+  }
+
+  // --- PART ---
+  else if (type === "PART") {
+    if (status === "Déjà encodé") {
+      val.prenom = $("#facturePartPrenom").value;
+      val.nom = $("#facturePartNom").value;
+      val.paiement = $("#facturePartPay").value;
+    } else if (status === "Pas encodé") {
+      val.prenom = $("#facturePartPrenom2").value;
+      val.nom = $("#facturePartNom2").value;
+      val.adresse = $("#facturePartAdresse").value;
+      val.paiement = $("#facturePartPay2").value;
+      val.telephone = $("#facturePartTel").value;
+      val.email = $("#facturePartMail").value;
+    }
+  }
+
+  return val;
+}
+
+    const hasFacture = d => d && d.type;
+
+    /* Firebase paths */
+    const reservationsRef = ref(db, "reservations");
+
+    /* CRUD */
+    $("#btnSave").addEventListener("click", async () => {
+      const date = $("#datePicker").value;
+      const start = $("#startTime").value;
+      const end = $("#endTime").value;
+      if (!date || !start || !end || end <= start) {
+        alert("Vérifie la date/heure");
+        return;
+      }
+ const data = {
+  date, start, end,
+  type: selectedType,
+  client: selectedClient,
+  note: $("#note").value.trim(),
+  adresse: ($("#adresse").value || "").trim().toUpperCase(),
+  vf: $("#indVF").classList.contains("violet"),
+  vp: $("#indVP").classList.contains("violet"),
+  facture: getFacture(),
+  aPayer: parseFloat($("#aPayer").value) || null,
+
+  // Prix uniquement affiché/saisi pour #LIFT
+  prixLFT: (selectedType === "LFT")
+    ? (parseFloat($("#prixLFT").value) || null)
+    : null,
+
+  // ✅ Somme en admin :
+  // - EXP : somme = aPayer
+  // - LFT : jamais ici (elle sera mise/retirée lors du choix de paiement)
+  somme: (selectedType === "EXP")
+    ? (parseFloat($("#aPayer").value) || null)
+    : null,
+
+  updatedAt: Date.now()
+};
+
+
+      if (!data.client) {
+        if (!confirm("Aucun choix PRO/PART sélectionné. Continuer ?")) return;
+      }
+      if (editingId) {
+        await update(ref(db, "reservations/" + editingId), data);
+        showToast("Modifié", "#f39c12");
+      } else {
+        await push(reservationsRef, data);
+        showToast("Ajouté", "#16a34a");
+      }
+      clearForm();
+    });
+
+    $("#btnCancelEdit").addEventListener("click", () => {
+      editingId = null;
+      clearForm();
+    });
+
+   function clearForm() {
+  editingId = null;
+  $("#btnCancelEdit").style.display = "none";
+  $("#btnSave").textContent = "Enregistrer";
+
+  // Réinitialiser les champs de base
+$("#datePicker").value = "";
+$("#startTime").value = "";
+$("#endTime").value = "";
+$("#note").value = "";
+$("#adresse").value = "";
+$("#aPayer").value = "";
+
+// 🔄 Masquer la case "À payer" (si visible)
+$("#aPayer").style.display = "none";
+// Réinitialiser et masquer la case "Prix" (#LIFT)
+$("#prixLFT").value = "";
+$("#prixLFT").style.display = "none";
+
+// 🔄 Réinitialiser le type vers le LIFT normal (et désélectionner Lift Express)
+document.querySelectorAll(".type-btn").forEach(btn => btn.classList.remove("active"));
+const defaultType = document.querySelector('.type-btn[data-type="LFT"]');
+if (defaultType) defaultType.classList.add("active");
+selectedType = "LFT";
+
+// Nettoyer les indicateurs visuels
+$("#indVF").classList.remove("violet");
+$("#indVP").classList.remove("violet");
+
+
+  // Réinitialiser le bloc facture
+  $("#factureBox").style.display = "none";
+  $("#factureType").value = "";
+  $("#factureStatus").value = "";
+
+  [
+    "factureProNom", "factureProPay",
+    "factureProNom2", "factureProRue", "factureProTVA", "factureProPay2",
+    "factureProTel", "factureProMail",
+    "facturePartPrenom", "facturePartNom", "facturePartPay",
+    "facturePartPrenom2", "facturePartNom2", "facturePartAdresse", "facturePartPay2",
+    "facturePartTel", "facturePartMail"
+  ].forEach(id => {
+    const el = $("#" + id);
+    if (el) el.value = "";
+  });
+
+  // Réinitialiser la sélection du type
+  // Remettre le type par défaut = LFT
+selectedType = "LFT";
+$$(".type-btn").forEach(x => x.classList.remove("active"));
+document.querySelector('.type-btn[data-type="LFT"]').classList.add("active");
+
+
+  // Rester sur l’onglet Réservations
+  document.querySelector(".tab-btn[data-tab='reservations']").click();
+}
+
+
+
+    /* Liste du jour */
+    $("#datePicker").addEventListener("change", () => listenDay($("#datePicker").value));
+
+   function renderItem(id, d) {
+  const who = d.client 
+    ? `<strong style="color:var(--violet)">${d.client}</strong>` 
+    : `<span class="muted"><em>—</em></span>`;
+
+  const div = document.createElement("div");
+  div.className = "res-item";
+  div.setAttribute("data-res-id", id);
+
+  div.innerHTML = `
+    <div>
+      <div class="title-line">
+        <span class="badge ${badge(d.type)}">${d.type}</span>
+        <strong>${toHM(d.start)} → ${toHM(d.end)}</strong>
+        <span class="pay-icons">
+  ${ (
+      (d.type === "EXP" && parseFloat(d.aPayer) > 0) ||
+      (d.type === "LFT" && parseFloat(d.prixLFT) > 0)
+
+   )
+
+      ? (d.payMethod
+          ? (`
+              <button class="pay-btn ${d.payMethod === 'cash' ? 'selected' : ''}" onclick="window.handlePay('${id}', 'cash')">
+                <img src="icons/cash-icon.png" alt="Cash">
+              </button>
+              <button class="pay-btn ${d.payMethod === 'wero' ? 'selected' : ''} ${d.payMethod === 'cash' ? 'hidden' : ''}" onclick="window.handlePay('${id}', 'wero')">
+                <img src="icons/wero-ero.png" alt="Wero">
+              </button>
+            `)
+          : (`
+              <button class="pay-btn" onclick="window.handlePay('${id}', 'cash')">
+                <img src="icons/cash-icon.png" alt="Cash">
+              </button>
+              <button class="pay-btn" onclick="window.handlePay('${id}', 'wero')">
+                <img src="icons/wero-ero.png" alt="Wero">
+              </button>
+            `)
+        )
+      : ""
+  }
+</span>
+
+        <span class="btn-wero-mobile" 
+              onclick="openWero('${d.date}', '${d.start}', '${d.end}')">
+         <img src="icons/wero-ero.png" alt="Wero" class="wero-icon">
+        </span>
+
+        ${who}
+        ${d.vf ? '<span class="pill violet">V(F)</span>' : ''}
+        ${d.vp ? '<span class="pill violet">V(P)</span>' : ''}
+        ${(d.facture && d.facture.type) ? '<span class="pill orange">Facture</span>' : ''}
+        ${d.adresse ? '<span class="pill orange">Adresse</span>' : ''}
+        ${d.note ? '<span class="pill orange">Note</span>' : ''}
+        ${d.aPayer ? `<div class="muted" style="margin-top:4px"><b>À payer :</b> ${d.aPayer.toFixed(2)} €</div>` : ""}
+
+      </div>
+
+      ${d.adresse ? `<div style="margin-top:4px"><strong>${d.adresse}</strong></div>` : ""}
+      ${(d.facture && d.facture.type) ? 
+        `<div class="muted" style="margin-top:4px"><b>Facture :</b> 
+         ${d.facture.type === "PRO" 
+           ? (d.facture.nom || "PRO") 
+           : ([d.facture?.prenom, d.facture?.nom].filter(Boolean).join(" ") || "PART")}
+         — ${d.facture.status || ""}</div>` 
+       : ""}
+
+      ${d.note ? `<div class="muted" style="margin-top:4px">${d.note}</div>` : ""}
+      ${d.aPayer ? `<div class="muted" style="margin-top:4px"><b>À payer :</b> ${parseFloat(d.aPayer).toFixed(2)} €</div>` : ""}
+      ${d.prixLFT ? `<div class="muted" style="margin-top:4px"><b>Prix :</b> ${parseFloat(d.prixLFT).toFixed(2)} €</div>` : ""}
+
+    </div>
+
+    <div class="actions">
+      
+      <button class="btn-secondary" data-act="edit" data-id="${id}" title="Modifier">✏️</button>
+      <button class="btn-danger" data-act="del" data-id="${id}" title="Annuler">🗑️</button>
+    </div>
+  `;
+
+  // actions
+  div.querySelector('[data-act="edit"]').addEventListener("click", () => loadIntoForm(id, d));
+  div.querySelector('[data-act="del"]').addEventListener("click", async () => {
+    if (confirm("Supprimer ?")) await remove(ref(db, "reservations/" + id));
+  });
+
+  return div;
+}
+
+
+    function listenDay(date) {
+      const qd = query(reservationsRef, orderByChild("date"), startAt(date), endAt(date));
+      onValue(qd, snap => {
+        const box = $("#list"); box.innerHTML = "";
+        const data = snap.val() || {};
+        const arr = Object.entries(data).map(([id, val]) => ({ id, ...val }))
+          .filter(d => d.date === date)
+          .sort((a, b) => a.start.localeCompare(b.start));
+
+        if (!arr.length) { $("#empty").style.display = "block"; return; }
+        $("#empty").style.display = "none";
+
+        arr.forEach(d => box.appendChild(renderItem(d.id, d)));
+      });
+    }
+    listenDay($("#datePicker").value);
+
+  function loadIntoForm(id, d) {
+  editingId = id;
+  $("#btnCancelEdit").style.display = "inline-block";
+  $("#btnSave").textContent = "Enregistrer";
+
+  // Champs généraux
+  $("#datePicker").value = d.date;
+  $("#startTime").value = d.start;
+  $("#endTime").value = d.end;
+
+  // Type
+  selectedType = d.type;
+  $$(".type-btn").forEach(x => x.classList.toggle("active", x.dataset.type === d.type));
+
+  // PRO/PART (sans ouvrir facture)
+  if (d.client === "PRO" || d.client === "PART") {
+    setClient(d.client);
+  } else {
+    setClient(null);
+  }
+
+  $("#note").value = d.note || "";
+  $("#adresse").value = d.adresse || "";
+  $("#aPayer").value = d.aPayer || "";
+  $("#prixLFT").value = d.prixLFT || "";
+
+if (d.type === "LFT") {
+    $("#prixLFT").style.display = "inline-block";
+}
+
+  $("#indVF").classList.toggle("violet", !d.vf);
+  $("#indVP").classList.toggle("violet", !d.vp);
+
+  // Facture
+  $("#factureType").value = d.facture?.type || "";
+  $("#factureStatus").value = d.facture?.status || "";
+
+  if (d.facture?.type === "PRO") {
+    if (d.facture.status === "Déjà encodé") {
+      $("#factureProNom").value = d.facture.nom || "";
+      $("#factureProPay").value = d.facture.paiement || "";
+    } else if (d.facture.status === "Pas encodé") {
+      $("#factureProNom2").value = d.facture.nom || "";
+      $("#factureProRue").value = d.facture.rue || "";
+      $("#factureProTVA").value = d.facture.tva || "";
+      $("#factureProPay2").value = d.facture.paiement || "";
+      $("#factureProTel").value = d.facture.telephone || "";
+      $("#factureProMail").value = d.facture.email || "";
+    }
+  } else if (d.facture?.type === "PART") {
+    if (d.facture.status === "Déjà encodé") {
+      $("#facturePartPrenom").value = d.facture.prenom || "";
+      $("#facturePartNom").value = d.facture.nom || "";
+      $("#facturePartPay").value = d.facture.paiement || "";
+    } else if (d.facture.status === "Pas encodé") {
+      $("#facturePartPrenom2").value = d.facture.prenom || "";
+      $("#facturePartNom2").value = d.facture.nom || "";
+      $("#facturePartAdresse").value = d.facture.adresse || "";
+      $("#facturePartPay2").value = d.facture.paiement || "";
+      $("#facturePartTel").value = d.facture.telephone || "";
+      $("#facturePartMail").value = d.facture.email || "";
+    }
+  }
+
+  updateFactureUI();
+
+  // Rester sur l’onglet Réservations
+  document.querySelector(".tab-btn[data-tab='reservations']").click();
+}
+
+
+    /* ===== Admin mensuel ===== */
+    const monthPicker = $("#monthPicker");
+    monthPicker.value = new Date().toISOString().slice(0, 7);
+
+    function monthBounds(ym) {
+      const [y, m] = ym.split("-").map(Number);
+      const last = new Date(y, m, 0).getDate();
+      return { start: `${ym}-01`, end: `${ym}-${String(last).padStart(2, "0")}` };
+    }
+
+    function rowHtml(d) {
+      const who = d.client || "";
+      const facLabel = (d.facture && d.facture.type)
+        ? (d.facture.type === "PRO"
+          ? (d.facture.nom || "PRO")
+          : ([d.facture?.prenom, d.facture?.nom].filter(Boolean).join(" ") || "PART"))
+        : "";
+      return `<tr data-row-id="${d.id}">
+  <td>${d.date}</td>
+  <td>${toHM(d.start)}–${toHM(d.end)}</td>
+  <td>${who}</td>
+  <td>${d.adresse || ""}</td>
+  <td>${facLabel}</td>
+  <td>${d.vf ? "✔️" : ""}</td>
+  <td>${d.vp ? "✔️" : ""}</td>
+  <td style="display:flex; align-items:center; gap:6px;">
+
+  <input
+    type="number"
+    class="admin-somme"
+    value="${d.somme || ''}"
+    step="0.01"
+    min="0"
+    inputmode="decimal"
+    style="width:90px;text-align:right;color:${d.vp ? 'red' : 'black'}"
+    data-id="${d.id}"
+  >
+
+  ${
+    d.payMethod === "cash"
+      ? `<img src="icons/cash-icon.png" style="width:22px;height:22px;">`
+      : d.payMethod === "wero"
+        ? `<img src="icons/wero-ero.png" style="width:22px;height:22px;">`
+        : ""
+  }
+
+</td>
+
+  <td>
+    <button class="btn-secondary" data-etype="edit" data-eid="${d.id}">✏️</button>
+    <button class="btn-danger" data-etype="del" data-eid="${d.id}">🗑️</button>
+  </td>
+</tr>`;
+
+    }
+
+    function renderAdmin(items) {
+      const exp = $("#adminEXP"), lft = $("#adminLFT");
+      exp.innerHTML = ""; lft.innerHTML = "";
+      items.forEach(d => {
+        if (d.type === "EXP") exp.insertAdjacentHTML("beforeend", rowHtml(d));
+        if (d.type === "LFT") lft.insertAdjacentHTML("beforeend", rowHtml(d));
+      });
+
+      // ✏️ depuis Admin -> focus réservation
+      [...exp.querySelectorAll('button[data-etype="edit"]'),
+      ...lft.querySelectorAll('button[data-etype="edit"]')].forEach(b => {
+        b.addEventListener("click", async () => {
+          const id = b.dataset.eid;
+          onValue(ref(db, "reservations/" + id), (s) => {
+            const r = s.val();
+            if (r && r.date) { document.querySelector('.tab-btn[data-tab="reservations"]').click(); $("#datePicker").value = r.date; listenDay(r.date); }
+          }, { onlyOnce: true });
+        });
+      });
+
+      // 🗑️ en Admin
+      [...exp.querySelectorAll('button[data-etype="del"]'),
+      ...lft.querySelectorAll('button[data-etype="del"]')].forEach(b => {
+        b.addEventListener("click", async () => {
+          if (confirm("Supprimer ?")) await remove(ref(db, "reservations/" + b.dataset.eid));
+        });
+      });
+
+      // 📢 en Admin (manuel)
+      [...exp.querySelectorAll('button[data-etype="notify"]'),
+      ...lft.querySelectorAll('button[data-etype="notify"]')].forEach(b => {
+        b.addEventListener("click", async () => {
+          const id = b.dataset.eid;
+          onValue(ref(db, "reservations/" + id), (s) => {
+            const r = s.val();
+            if (r) { manualNotify({ ...r, id }); }
+          }, { onlyOnce: true });
+        });
+      });
+    }
+
+  function listenMonth(ym) {
+  const { start, end } = monthBounds(ym);
+  const qm = query(ref(db, "reservations"), orderByChild("date"), startAt(start), endAt(end));
+
+  onValue(qm, snap => {
+    const data = snap.val() || {};
+    const arr = Object.entries(data).map(([id, val]) => ({ id, ...val }))
+      .sort((a, b) => a.date.localeCompare(b.date) || a.start.localeCompare(b.start));
+
+    // 🧩 Affichage des réservations dans l'admin
+    renderAdmin(arr);
+
+    // 🔢 Calcul des totaux initiaux
+    updateTotals();
+
+   // === Gestion des champs Somme (€) ===
+document.querySelectorAll('.admin-somme').forEach(inp => {
+  // debounce générique
+  const debounce = (fn, delay = 400) => {
+    let t; 
+    return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), delay); };
+  };
+
+  const colorize = () => {
+    const row = inp.closest('tr');
+    const vpCell = row?.querySelector('td:nth-child(7)');
+    const vpActif = vpCell && vpCell.textContent.includes('✔️');
+    inp.style.color = vpActif ? 'red' : 'black';
+  };
+
+  const save = async () => {
+    // ne rien faire si vide
+    if (!inp.value || !inp.value.trim()) return;
+
+    // virgule -> point
+    const raw = inp.value.replace(',', '.');
+
+    // nombre valide ?
+    const num = Number(raw);
+    if (!isFinite(num)) return;
+
+    // push vers Firebase
+    const id = inp.dataset.id;
+    await update(ref(db, "reservations/" + id), { somme: num });
+
+    showToast("💰 Somme enregistrée", "#16a34a");
+    updateTotals();
+  };
+
+  const debouncedSave = debounce(save, 500);
+
+  // Pendant la saisie : on laisse taper librement, on recolorie, on sauve en debounced
+  inp.addEventListener('input', () => {
+    colorize();
+    debouncedSave();
+  });
+
+  // À la sortie du champ : on normalise visuellement à 2 décimales et on sauve immédiatement
+  inp.addEventListener('blur', async () => {
+    if (!inp.value || !inp.value.trim()) return;
+    const raw = inp.value.replace(',', '.');
+    const num = Number(raw);
+    if (isFinite(num)) {
+      inp.value = num.toFixed(2); // normalisation visuelle
+      colorize();
+      await save(); // save immédiate
+    }
+  });
+});
+
+
+    // === Surveille les changements de VP en direct ===
+    document.querySelectorAll('td:nth-child(7)').forEach(vpCell => {
+      vpCell.addEventListener('click', () => {
+        // ⏱ petit délai pour laisser Firebase rafraîchir le DOM
+        setTimeout(() => {
+          // 🎨 met à jour les couleurs des sommes
+          document.querySelectorAll('.admin-somme').forEach(inp => {
+            const row = inp.closest('tr');
+            const vp = row.querySelector('td:nth-child(7)');
+            const vpActif = vp && vp.textContent.includes('✔️');
+            inp.style.color = vpActif ? 'red' : 'black';
+          });
+          // 🔁 met à jour les totaux
+          updateTotals();
+        }, 400);
+      });
+    });
+  });
+}
+
+  function updateTotals() {
+  let totalExpRouge = 0, totalExpNoir = 0;
+  let totalLftRouge = 0, totalLftNoir = 0;
+
+  document.querySelectorAll("#adminEXP tr").forEach(tr => {
+    const inp = tr.querySelector(".admin-somme");
+    if (!inp) return;
+    const val = parseFloat(inp.value) || 0;
+    const isVP = inp.style.color === "red";
+    if (isVP) totalExpRouge += val; else totalExpNoir += val;
+  });
+
+  document.querySelectorAll("#adminLFT tr").forEach(tr => {
+    const inp = tr.querySelector(".admin-somme");
+    if (!inp) return;
+    const val = parseFloat(inp.value) || 0;
+    const isVP = inp.style.color === "red";
+    if (isVP) totalLftRouge += val; else totalLftNoir += val;
+  });
+
+  const expTxt = `🟥 VP: ${totalExpRouge.toFixed(2)} € — ⚫️ Non-VP: ${totalExpNoir.toFixed(2)} €`;
+  const lftTxt = `🟥 VP: ${totalLftRouge.toFixed(2)} € — ⚫️ Non-VP: ${totalLftNoir.toFixed(2)} €`;
+
+  document.getElementById("totalEXP").textContent = expTxt;
+  document.getElementById("totalLFT").textContent = lftTxt;
+}
+
+
+   monthPicker.addEventListener("change", () => listenMonth(monthPicker.value));
+listenMonth(monthPicker.value);
+
+
+
+// ✅✅✅ AJOUTE ICI : BLOC CORBEILLE ✅✅✅
+
+// ===== Affichage de la CORBEILLE =====
+const trashBody = document.getElementById("adminTrash");
+
+onValue(ref(db, "trash"), (snapshot) => {
+  trashBody.innerHTML = "";
+
+  snapshot.forEach(item => {
+    const id = item.key;
+    const d = item.val();
+
+    trashBody.innerHTML += `
+      <tr>
+        <td>${d.date || ""}</td>
+        <td>${d.heure || ""}</td>
+        <td>${d.nom || ""}</td>
+        <td>${d.type || ""}</td>
+
+        <td style="display:flex; gap:8px;">
+          <button class="btn-secondary" onclick="restoreItem('${id}')">♻️</button>
+          <button class="btn-danger" onclick="deleteForever('${id}')">🗑️</button>
+        </td>
+      </tr>
+    `;
+  });
+});
+
+
+// ✅ Restaurer un élément
+function restoreItem(id) {
+  const trashRef = ref(db, "trash/" + id);
+
+  get(trashRef).then(snapshot => {
+    if (!snapshot.exists()) return;
+
+    const item = snapshot.val();
+
+    let target = "";
+    if (item.type === "EXP") target = "EXP";
+    if (item.type === "LFT") target = "LFT";
+
+    if (!target) {
+      alert("Type inconnu, impossible de restaurer.");
+      return;
+    }
+
+    set(ref(db, target + "/" + id), item).then(() => {
+      remove(trashRef);
+    });
+  });
+}
+// ❌ Supprimer définitivement un élément
+function deleteForever(id) {
+  if (!confirm("Supprimer définitivement cet élément ?")) return;
+
+  remove(ref(db, "trash/" + id));
+}
+
+
+// ===== Notification manuelle (fallback sûr) =====
+function manuaNotify(d) {     // ligne ~2256
+
+
+  try {
+    const txt = `📅 Réservation
+Type: ${d.type || ""}
+Date: ${d.date || ""} ${d.start || ""}->${d.end || ""}
+Client: ${d.client || ""}
+Adresse: ${d.adresse || ""}`;
+
+    if (navigator.share) {
+      navigator.share({ title: "Réservation", text: txt }).catch(() => {});
+    } else {
+      alert(txt);
+    }
+  } catch (e) {
+    console.warn("manualNotify error", e);
+    alert("Notification non supportée sur ce navigateur.");
+  }
+}
+
+
+// 🕓 === Mise à jour des "Prochaines réservations" ===
+function updateNextReservations() {
+  const now = new Date();
+  const today = now.toISOString().split("T")[0];
+  const currentTime = now.toTimeString().slice(0, 5);
+
+  const q = query(reservationsRef, orderByChild("date"), startAt(today));
+  onValue(q, snap => {
+    const data = snap.val() || {};
+    const all = Object.values(data);
+
+    const upcoming = all
+      .filter(d => d.date > today || (d.date === today && d.start >= currentTime))
+      .sort((a, b) => a.date.localeCompare(b.date) || a.start.localeCompare(b.start));
+
+    const expEl = document.getElementById("next-exp");
+    const lftEl = document.getElementById("next-lft");
+    const perEl = document.getElementById("next-per");
+    expEl.textContent = "• Prochaine LIFT EXPRESS : —";
+    lftEl.textContent = "• Prochaine #LIFT : —";
+    perEl.textContent = "• Prochain RDV perso : —";
+
+    const findNext = type => upcoming.find(r => r.type === type);
+
+    const nextEXP = findNext("EXP");
+    const nextLFT = findNext("LFT");
+    const nextPER = findNext("PER");
+
+    if (nextEXP) expEl.textContent = `• Prochaine LIFT EXPRESS : ${nextEXP.date} ${nextEXP.start}`;
+    if (nextLFT) lftEl.textContent = `• Prochaine #LIFT : ${nextLFT.date} ${nextLFT.start}`;
+    if (nextPER) perEl.textContent = `• Prochain RDV perso : ${nextPER.date} ${nextPER.start}`;
+  });
+}
+
+// Lancer la mise à jour dès le chargement
+updateNextReservations();
+// === Fiches PRO — Pas encore encodées ===
+const proList = document.getElementById("proList");
+const btnProAlphabet = document.getElementById("btnProAlphabet");
+
+btnProAlphabet.addEventListener("click", () => {
+  document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+  document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
+  document.querySelector('.tab-btn[data-tab="admin"]').classList.add("active");
+  document.getElementById("tab-proalphabet").classList.add("active");
+
+  // Charge les données
+  proList.textContent = "Chargement...";
+
+  onValue(ref(db, "reservations"), snap => {
+    const data = snap.val() || {};
+    const pros = Object.entries(data)
+      .map(([id, v]) => ({ id, ...v }))
+      .filter(d => d.facture?.type === "PRO" && d.facture?.status === "Pas encodé")
+      .sort((a, b) => (a.facture.nom || "").localeCompare(b.facture.nom || ""));
+
+    if (!pros.length) {
+      proList.textContent = "Aucune fiche PRO à encoder ✅";
+      return;
+    }
+
+    const html = pros.map(d => `
+      <div class="res-item">
+        <div>
+          <strong>${d.facture.nom || "—"}</strong><br>
+          ${d.facture.rue || ""}<br>
+          TVA : ${d.facture.tva || "—"}<br>
+          📞 ${d.facture.telephone || ""}<br>
+          ✉️ ${d.facture.email || ""}
+        </div>
+        <div class="muted" style="text-align:right">
+          ${d.date} ${toHM(d.start)}–${toHM(d.end)}<br>
+          ${d.adresse || ""}
+        </div>
+      </div>
+    `).join("");
+
+    proList.innerHTML = html;
+  });
+});
+/* 🔄 Exportation CSV avec totaux (VP / Non-VP / Général) */
+async function exportReservations(type) {
+  const start = document.getElementById("exportStart").value;
+  const end = document.getElementById("exportEnd").value;
+
+  if (!start || !end) {
+    alert("Merci de sélectionner une période (du ... au ...)");
+    return;
+  }
+
+  const snap = await get(ref(db, "reservations"));
+  const all = snap.val() || {};
+
+  const rows = Object.values(all).filter(r =>
+    r.type === type && r.date >= start && r.date <= end
+  );
+
+  if (!rows.length) {
+    alert("Aucune réservation trouvée pour cette période.");
+    return;
+  }
+
+  // === Totaux ===
+  let totalVP = 0, totalNonVP = 0;
+  rows.forEach(r => {
+    const val = parseFloat(r.somme || r.aPayer || r.prixLFT || 0);
+    if (r.vp) totalVP += val;
+    else totalNonVP += val;
+  });
+  const totalGeneral = totalVP + totalNonVP;
+
+  // === CSV principal ===
+  const headers = [
+    "Date", "Début", "Fin", "Client", "Adresse",
+    "Facture", "VF", "VP", "Somme (€)", "Note"
+  ];
+
+  const dataLines = rows.map(r => [
+    r.date || "",
+    r.start || "",
+    r.end || "",
+    r.client || "",
+    (r.adresse || "").replace(/\n/g, " "),
+    r.facture?.type || "",
+    r.vf ? "Oui" : "Non",
+    r.vp ? "Oui" : "Non",
+    r.somme || r.aPayer || r.prixLFT || "",
+    (r.note || "").replace(/\n/g, " ")
+  ]);
+
+  // === Ligne Totaux ===
+  dataLines.push([]);
+  dataLines.push(["", "", "", "", "", "", "", "TOTAL VP", totalVP.toFixed(2) + " €"]);
+  dataLines.push(["", "", "", "", "", "", "", "TOTAL Non-VP", totalNonVP.toFixed(2) + " €"]);
+  dataLines.push(["", "", "", "", "", "", "", "TOTAL GÉNÉRAL", totalGeneral.toFixed(2) + " €"]);
+
+  // === Construction CSV ===
+  const csv = [headers.join(";")]
+    .concat(dataLines.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(";")))
+    .join("\n");
+
+  // === Téléchargement ===
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${type === "EXP" ? "lift_express" : "lift"}_${start}_au_${end}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+/* 🟩 Réactivation des boutons existants */
+document.getElementById("btnExportRangeEXP")?.addEventListener("click", () => exportReservations("EXP"));
+document.getElementById("btnExportRangeLFT")?.addEventListener("click", () => exportReservations("LFT"));
+
+/* === Ouverture / Fermeture des menus déroulants (Admin, Réservations) === */
+document.querySelectorAll(".tab-dropdown").forEach(drop => {
+  const btn = drop.querySelector(".tab-btn");
+  const menu = drop.querySelector(".dropdown-menu");
+
+  if (btn && menu) {
+    btn.addEventListener("click", e => {
+      e.stopPropagation();
+      const isVisible = menu.style.display === "flex";
+      document.querySelectorAll(".dropdown-menu").forEach(m => m.style.display = "none");
+      menu.style.display = isVisible ? "none" : "flex";
+    });
+  }
+});
+
+// Fermer les menus si clic ailleurs
+document.addEventListener("click", () => {
+  document.querySelectorAll(".dropdown-menu").forEach(m => m.style.display = "none");
+});
+/* === RÉSERVATIONS HEBDOMADAIRES (affichage + rétractation) === */
+
+const weekContainer = document.createElement("div");
+weekContainer.id = "weekContainer";
+weekContainer.style.display = "none";
+weekContainer.style.padding = "20px";
+document.body.appendChild(weekContainer);
+
+// Fonction pour afficher les réservations de la semaine
+async function renderWeek() {
+  const snap = await get(ref(db, "reservations"));
+  const data = snap.val() || {};
+
+  // Calcul de la semaine courante (lundi → dimanche)
+  const today = new Date();
+  const day = today.getDay();
+  const diffToMonday = day === 0 ? -6 : 1 - day;
+  const monday = new Date(today);
+  monday.setDate(today.getDate() + diffToMonday);
+  const sunday = new Date(monday);
+  sunday.setDate(monday.getDate() + 6);
+
+  const start = monday.toISOString().split("T")[0];
+  const end = sunday.toISOString().split("T")[0];
+
+  // Filtrage des réservations
+  const weekRes = Object.values(data).filter(r => r.date >= start && r.date <= end);
+
+  let html = `
+    <button id="closeWeek" class="btn-secondary" style="margin-bottom:10px;">⬅ Retour</button>
+    <h2>📅 Réservations de la semaine du ${start} au ${end}</h2>
+  `;
+
+  if (!weekRes.length) {
+    html += `<p>Aucune réservation pour cette semaine.</p>`;
+  } else {
+    html += `
+      <table style="width:100%;border-collapse:collapse;margin-top:10px;">
+        <thead>
+          <tr style="background:#f3f3f3;text-align:left;">
+            <th style="padding:6px;">Date</th>
+            <th style="padding:6px;">Client</th>
+            <th style="padding:6px;">Heure</th>
+            <th style="padding:6px;">Type</th>
+            <th style="padding:6px;">Somme (€)</th>
+          </tr>
+        </thead>
+        <tbody>
+    `;
+
+    weekRes
+      .sort((a, b) => (a.date + a.start).localeCompare(b.date + b.start))
+      .forEach(r => {
+        html += `
+          <tr>
+            <td style="padding:6px;border-bottom:1px solid #ddd;">${r.date || ""}</td>
+            <td style="padding:6px;border-bottom:1px solid #ddd;">${r.client || ""}</td>
+            <td style="padding:6px;border-bottom:1px solid #ddd;">${r.start || ""} → ${r.end || ""}</td>
+            <td style="padding:6px;border-bottom:1px solid #ddd;">${r.type || ""}</td>
+            <td style="padding:6px;border-bottom:1px solid #ddd;">${r.somme || r.aPayer || r.prixLFT || ""}</td>
+          </tr>
+        `;
+      });
+
+    html += `</tbody></table>`;
+  }
+
+  weekContainer.innerHTML = html;
+
+  // Gestion de l’affichage
+  document.querySelector("#list")?.parentElement?.style.setProperty("display", "none");
+  weekContainer.style.display = "block";
+
+  // Bouton retour
+  document.getElementById("closeWeek").addEventListener("click", () => {
+    weekContainer.style.display = "none";
+    document.querySelector("#list")?.parentElement?.style.setProperty("display", "block");
+  });
+}
+
+// Connexion du bouton “Agenda semaine”
+const btnWeekView = document.getElementById("btnWeekView");
+if (btnWeekView) {
+  btnWeekView.addEventListener("click", renderWeek);
+}
+
+
+
+</script>
+
+
+  <!-- === Partage de la réservation (Messenger / SMS / Web Share) === -->
+  <script type="module">
+    import html2canvas from "https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.esm.js";
+
+    // Ajout d'un bouton 📤 à chaque réservation (observer la liste)
+    const observer = new MutationObserver(() => {
+      document.querySelectorAll(".res-item").forEach(item => {
+        if (!item.querySelector(".btn-share")) {
+          const actions = item.querySelector(".actions");
+          if (!actions) return;
+          const shareBtn = document.createElement("button");
+          shareBtn.textContent = "📤";
+          shareBtn.title = "Partager";
+          shareBtn.className = "btn-secondary btn-share";
+          shareBtn.style.minWidth = "38px";
+          shareBtn.addEventListener("click", () => shareReservation(item));
+          actions.prepend(shareBtn);
+        }
+      });
+    });
+    const list = document.getElementById("list");
+    if (list) observer.observe(list, { childList: true, subtree: true });
+
+    async function shareReservation(itemEl) {
+  try {
+    // 🔹 Récupération de la date de la réservation (depuis le sélecteur du jour)
+    const dateText = document.getElementById("datePicker").value;
+    const type = itemEl.querySelector(".badge")?.textContent?.trim() || "";
+    const hours = itemEl.querySelector("strong")?.textContent?.trim() || "";
+
+   // 🗓️ On ajoute temporairement uniquement la date (sans les heures)
+const badge = document.createElement("div");
+badge.textContent = `📅 ${dateText}`;
+badge.style.cssText = `
+  position:absolute;
+  top:6px;
+  right:8px;
+  background:rgba(255,255,255,0.92);
+  color:#111;
+  font-weight:700;
+  font-size:13px;
+  line-height:1.3;
+  padding:5px 8px;
+  border-radius:8px;
+  box-shadow:0 2px 6px rgba(0,0,0,0.15);
+`;
+itemEl.style.position = "relative";
+itemEl.appendChild(badge);
+
+
+    // 🖼️ Capture avec la date visible
+    const canvas = await html2canvas(itemEl, { backgroundColor: "#ffffff", scale: 2 });
+    const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/png"));
+    const file = new File([blob], "reservation.png", { type: "image/png" });
+
+    // 🧹 On retire le badge après la capture
+    itemEl.removeChild(badge);
+
+    // 📱 Si partage natif supporté
+    const shareText = `📅 Réservation du ${dateText}
+${hours ? `⏰ ${hours}` : ""} ${type ? `🏷️ ${type}` : ""}
+Voici ma réservation 📌`;
+
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({
+        files: [file],
+        title: `📅 Réservation du ${dateText}`,
+        text: shareText
+      });
+    } else {
+      // 📨 Fallback : Messenger / SMS
+      const blobUrl = URL.createObjectURL(blob);
+      const msg = encodeURIComponent(shareText);
+      const messengerUrl = `fb-messenger://share?link=${encodeURIComponent(blobUrl)}`;
+      const smsUrl = `sms:?body=${msg}%20${encodeURIComponent(blobUrl)}`;
+
+      const popup = document.createElement("div");
+      popup.style = `
+        position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%);
+        background: #fff; padding: 16px; border-radius: 10px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.2); z-index: 100000; text-align:center;
+      `;
+      popup.innerHTML = `
+        <h4 style="margin-top:0">Partager la réservation</h4>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">
+          <button id="shareMessenger" class="btn-primary">📩 Messenger</button>
+          <button id="shareSMS" class="btn-secondary">📱 SMS</button>
+          <button id="shareCancel" class="btn-danger">Annuler</button>
+        </div>
+      `;
+      document.body.appendChild(popup);
+      popup.querySelector("#shareMessenger").addEventListener("click", () => { window.location.href = messengerUrl; popup.remove(); });
+      popup.querySelector("#shareSMS").addEventListener("click", () => { window.location.href = smsUrl; popup.remove(); });
+      popup.querySelector("#shareCancel").addEventListener("click", () => popup.remove());
+    }
+  } catch (err) {
+    console.error("Erreur de partage :", err);
+    alert("Impossible de partager cette réservation sur ce navigateur.");
+  }
+}
+
+  </script>
+
+  <!-- === Tarif + Calculette corrigés (ouvrables ENSEMBLE) === -->
+  <script>
+    const tarifBubble = document.getElementById("tarif-top-bubble");
+    const tarifContent = tarifBubble.querySelector(".tarif-top-content");
+    const calcToggle = document.getElementById("calc-toggle-btn");
+    const calcBubble = document.getElementById("calc-bubble");
+    const calcDisplay = document.getElementById("calc-display");
+    let calcInput = "";
+
+    // ✅ Clic sur la bulle Tarif : ouvre/ferme son contenu (sans impacter la calculette)
+    tarifBubble.addEventListener("click", (e) => {
+      // si on clique sur le texte/emoji de la bulle, on ouvre
+      if (e.target === calcToggle || calcToggle.contains(e.target)) return; // bouton calc = ignorer ici
+      e.stopPropagation();
+      tarifBubble.classList.toggle("open");
+      // NE PAS fermer la calculette ici -> on peut utiliser les deux
+      repositionCalc();
+    });
+
+    // ✅ Bouton calculette : ouvre/ferme la bulle calc indépendamment
+    calcToggle.addEventListener("click", (e) => {
+      e.stopPropagation();
+      calcBubble.classList.toggle("open");
+      repositionCalc();
+    });
+
+    // ✅ Ferme à l’extérieur
+    document.addEventListener("click", (e) => {
+      if (!tarifBubble.contains(e.target)) {
+        tarifBubble.classList.remove("open");
+      }
+      if (!calcBubble.contains(e.target) && !calcToggle.contains(e.target)) {
+        calcBubble.classList.remove("open");
+      }
+    });
+
+    // ✅ Calculette fonctionnement
+    calcBubble.querySelectorAll(".calc-buttons button").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const val = btn.textContent;
+        if (val === "C") {
+          calcInput = "";
+        } else if (val === "=") {
+          try {
+            calcInput = eval(calcInput).toString();
+          } catch {
+            calcInput = "Erreur";
+          }
+        } else {
+          if (calcInput === "Erreur") calcInput = "";
+          calcInput += val;
+        }
+        calcDisplay.value = calcInput;
+      });
+    });
+
+    // ✅ Positionne la calculette immédiatement SOUS la bulle Tarif ouverte (desktop + mobile)
+    function repositionCalc() {
+      if (!calcBubble.classList.contains("open")) return;
+
+      // Si Tarif est ouvert, on ancre la calculette sous son contenu
+      const anchor = (tarifBubble.classList.contains("open") && tarifContent) ? tarifContent : tarifBubble;
+      const rect = anchor.getBoundingClientRect();
+
+      const top = rect.bottom + window.scrollY + 10;  // 10px sous le bloc
+      let left = rect.left + window.scrollX;
+      let width = rect.width;
+
+      // Sur mobile : largeur quasi pleine
+      if (window.matchMedia("(max-width: 640px)").matches) {
+        left = Math.max(8, window.scrollX + (window.innerWidth * 0.02));
+        width = Math.min(520, window.innerWidth * 0.96);
+      }
+
+      Object.assign(calcBubble.style, {
+        position: "absolute",
+        top: top + "px",
+        left: left + "px",
+        width: width + "px"
+      });
+    }
+    window.addEventListener("resize", repositionCalc, { passive: true });
+    window.addEventListener("scroll", repositionCalc, { passive: true, capture: true });
+  </script>
+
+  <!-- (Optionnel) Service Worker PWA -->
+  <script>
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("/service-worker.js")
+        .then(reg => console.log("✅ SW:", reg.scope))
+        .catch(err => console.warn("SW KO", err));
+    }
+  </script>
+  <style>
+/* Nouveau bouton Wero (logo image au lieu du W rouge) */
+.btn-wero-mobile {
+  margin-left: 6px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.btn-wero-mobile img.wero-icon {
+  width: 32px;         /* élargi */
+  height: 32px;
+  object-fit: contain;
+  opacity: 0.95;
+  transform: scale(1.1);  /* léger zoom permanent */
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.btn-wero-mobile:hover img.wero-icon {
+  transform: scale(1.2);
+  opacity: 1;
+}
+
+
+</style>
+<script>
+  window.openWero = function(date, start, end) {
+    const note = `${date} ${start}`;
+    const url = `wero.html?note=${encodeURIComponent(note)}`;
+    window.location.href = url;
+  };
+</script>
+
+<!-- === Vue semaine (avec retour sur clic “Réservations”) === -->
+<script>
+const { firebaseRef: ref, firebaseQuery: query, firebaseOrderByChild: orderByChild,
+        firebaseStartAt: startAt, firebaseEndAt: endAt, firebaseOnValue: onValue } = window;
+
+const db = window.db;
+const reservationsRef = ref(db, "reservations");
+
+// === Conteneur caché pour l’agenda semaine ===
+const weekContainer = document.createElement("div");
+weekContainer.id = "weekView";
+weekContainer.className = "card";
+weekContainer.style.display = "none";
+weekContainer.innerHTML = `
+  <h3 style="margin-top:0">🗓️ Agenda de la semaine</h3>
+  <div id="weekList"></div>
+`;
+document.querySelector("#tab-reservations").appendChild(weekContainer);
+
+// === Fonction pour obtenir la semaine courante ===
+function getWeekBounds(date = new Date()) {
+  const day = date.getDay() || 7; // dimanche = 7
+  const monday = new Date(date);
+  monday.setDate(date.getDate() - day + 1);
+  const sunday = new Date(monday);
+  sunday.setDate(monday.getDate() + 6);
+  return {
+    start: monday.toISOString().split("T")[0],
+    end: sunday.toISOString().split("T")[0]
+  };
+}
+
+// === Affiche la semaine ===
+function renderWeek() {
+  const { start, end } = getWeekBounds();
+  const q = query(reservationsRef, orderByChild("date"), startAt(start), endAt(end));
+
+  onValue(q, (snap) => {
+    const data = snap.val() || {};
+    const arr = Object.entries(data).map(([id, val]) => ({ id, ...val }))
+      .sort((a, b) => a.date.localeCompare(b.date) || a.start.localeCompare(b.start));
+
+    const weekBox = document.getElementById("weekList");
+    weekBox.innerHTML = "";
+
+    if (!arr.length) {
+      weekBox.innerHTML = `<div class="muted">Aucune réservation cette semaine.</div>`;
+      return;
+    }
+
+    // Grouper par date
+    const grouped = {};
+    arr.forEach(d => {
+      if (!grouped[d.date]) grouped[d.date] = [];
+      grouped[d.date].push(d);
+    });
+
+    Object.keys(grouped).forEach(date => {
+      const dayTitle = new Date(date).toLocaleDateString("fr-FR", {
+        weekday: "long", day: "numeric", month: "short"
+      });
+      const dayDiv = document.createElement("div");
+      dayDiv.innerHTML = `<h4 style="text-transform:capitalize;margin-bottom:4px">${dayTitle}</h4>`;
+      grouped[date].forEach(d => {
+        const color = d.type === "LFT" ? "var(--green)" : d.type === "EXP" ? "var(--red)" : "var(--muted)";
+        const line = document.createElement("div");
+        line.style.padding = "4px 0";
+       // === Icône paiement ===
+let payIcon = "";
+if (d.paiement === "wero") {
+    payIcon = `<img src="icons/wero-ero.png" alt="W" style="height:18px;vertical-align:middle">`;
+} else if (d.paiement === "cash") {
+    payIcon = `<img src="icons/cash-icon.png" alt="C" style="height:18px;vertical-align:middle">`;
+}
+
+// Si écran trop petit → lettres W / C en rouge
+if (window.innerWidth < 380) {
+    payIcon = `<span style="color:red;font-weight:700">${
+        d.paiement === "wero" ? "W" : "C"
+    }</span>`;
+}
+
+// === Ligne admin ===
+line.innerHTML = `
+    ${payIcon}&nbsp;
+    <span style="color:${color};font-weight:600">${d.type}</span> :
+    ${d.start.slice(0,5)}–${d.end.slice(0,5)}
+    ${d.adresse ? " — <em>" + d.adresse + "</em>" : ""}
+`;
+
+        dayDiv.appendChild(line);
+      });
+      weekBox.appendChild(dayDiv);
+      weekBox.appendChild(document.createElement("hr"));
+    });
+  });
+}
+
+// === Navigation ===
+const weekBtn = document.getElementById("btnWeekView");
+const resBtn = document.getElementById("reservationsBtn");
+
+// Clic sur “Agenda semaine” -> affiche la vue semaine
+weekBtn.addEventListener("click", () => {
+  document.querySelector("#list").parentElement.style.display = "none"; // cache la carte du jour
+  weekContainer.style.display = "block";
+  renderWeek();
+});
+
+// Clic sur “Réservations” -> revient à la vue du jour
+resBtn.addEventListener("click", (e) => {
+  const isWeekVisible = weekContainer.style.display === "block";
+  if (isWeekVisible) {
+    e.stopPropagation(); // empêche juste la réouverture du menu
+    weekContainer.style.display = "none";
+    document.querySelector("#list").parentElement.style.display = "block";
+  }
+});
+
+// Si on change la date → retour à la vue jour
+document.getElementById("datePicker").addEventListener("change", () => {
+  weekContainer.style.display = "none";
+  document.querySelector("#list").parentElement.style.display = "block";
+});
+
+// === Sous-menu Admin ===
+const adminBtn = document.getElementById("adminBtn");
+const adminMenu = document.getElementById("adminMenu");
+
+if (adminBtn && adminMenu) {
+  adminBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    adminMenu.style.display = adminMenu.style.display === "flex" ? "none" : "flex";
+  });
+
+  document.addEventListener("click", () => {
+    adminMenu.style.display = "none";
+  });
+}
+// === Fonction utilitaire pour bornes de mois ===
+function monthBounds(monthStr) {
+  // Exemple : monthStr = "2025-10"
+  const [year, month] = monthStr.split("-").map(Number);
+  const start = `${year}-${String(month).padStart(2, "0")}-01`;
+  const endDate = new Date(year, month, 0).getDate();
+  const end = `${year}-${String(month).padStart(2, "0")}-${endDate}`;
+  return { start, end };
+}
+
+// === EXPORT CSV par type ===
+function exportCSV(type) {
+  const { start, end } = monthBounds(monthPicker.value);
+  const qm = query(ref(db, "reservations"), orderByChild("date"), startAt(start), endAt(end));
+  
+  onValue(qm, snap => {
+    const data = snap.val() || {};
+    const arr = Object.entries(data)
+      .map(([id, val]) => ({ id, ...val }))
+      .filter(r => r.type === type)
+      .sort((a, b) => a.date.localeCompare(b.date) || a.start.localeCompare(b.start));
+
+    if (!arr.length) {
+      alert("Aucune réservation trouvée pour ce mois.");
+      return;
+    }
+
+    const headers = ["Date", "Heures", "Client", "Adresse", "Facture", "VF", "VP", "Somme (€)"];
+  
+    const row = [
+  d.date,
+  `${toHM(d.start)}–${toHM(d.end)}`,
+  d.client || "",
+  d.adresse || "",
+  facLabel,
+  d.vf ? "✔️" : "",
+  d.vp ? "✔️" : "",
+  d.somme ? d.somme.toFixed(2) : ""
+];
+
+
+    const csv = [headers.join(";"), ...rows.map(r => r.join(";"))].join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `${type}-${monthPicker.value}.csv`;
+    link.click();
+  }, { onlyOnce: true });
+}
+   // === EXPORT CSV sur période personnalisée ===
+function exportCSVRange(type) {
+  const start = document.getElementById("exportStart").value;
+  const end = document.getElementById("exportEnd").value;
+
+  if (!start || !end) {
+    alert("Merci de sélectionner une période complète (date de début et de fin).");
+    return;
+  }
+
+  const qm = query(ref(db, "reservations"), orderByChild("date"), startAt(start), endAt(end));
+
+  onValue(qm, snap => {
+    const data = snap.val() || {};
+    const arr = Object.entries(data)
+      .map(([id, val]) => ({ id, ...val }))
+      .filter(r => r.type === type)
+      .sort((a, b) => a.date.localeCompare(b.date) || a.start.localeCompare(b.start));
+
+    if (!arr.length) {
+      alert(`Aucune réservation ${type} trouvée entre ${start} et ${end}.`);
+      return;
+    }
+
+    const headers = ["Date", "Début", "Fin", "Client", "Adresse", "Facture", "VF", "VP"];
+    const rows = arr.map(r => [
+      r.date, r.start, r.end, r.client || "",
+      r.adresse || "",
+      r.facture?.type ? (r.facture.nom || r.facture.type) : "",
+      r.vf ? "✔️" : "",
+      r.vp ? "✔️" : ""
+    ]);
+  
+    // Ligne vide pour séparer à la fin du CSV
+   rows.push([]);
+
+    const csv = [headers.join(";"), ...rows.map(r => r.join(";"))].join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `${type}-${start}_à_${end}.csv`;
+    link.click();
+  }, { onlyOnce: true });
+}
+
+
+// === Boutons dans l’interface Admin ===
+const btnExportEXP = document.createElement("button");
+btnExportEXP.textContent = "📥 Exporter LIFT EXPRESS (mois)";
+btnExportEXP.className = "btn-secondary";
+btnExportEXP.style.margin = "8px 0";
+btnExportEXP.addEventListener("click", () => exportCSV("EXP"));
+
+const btnExportLFT = document.createElement("button");
+btnExportLFT.textContent = "📥 Exporter #LIFT (mois)";
+btnExportLFT.className = "btn-secondary";
+btnExportLFT.style.margin = "8px 0";
+btnExportLFT.addEventListener("click", () => exportCSV("LFT"));
+
+document.querySelector("h3.admin-h3").before(btnExportEXP);
+document.querySelector("h3.admin-h3 + table").after(btnExportLFT);
+// === Sous-onglet PRO Pas encore encodés ===
+$("#btnProAlphabet").addEventListener("click", () => {
+  $$(".tab-btn").forEach(x => x.classList.remove("active"));
+  $$(".tab-panel").forEach(p => p.classList.remove("active"));
+  $("#tab-proalphabet").classList.add("active");
+  loadProAlphabet();
+});
+
+// Fonction pour nettoyer le nom d'entreprise (ignorer SRL, SA, etc.)
+function normalizeName(nom) {
+  if (!nom) return "";
+  return nom
+    .toUpperCase()
+    .replace(/\b(SPRL|SRL|SA|SC|SCS|SCRL|ASBL)\b/g, "") // supprime ces abréviations
+    .replace(/[^A-Z0-9]/g, "") // supprime caractères spéciaux
+    .trim();
+}
+
+// Charger et trier les fiches PRO non encodées
+function loadProAlphabet() {
+  const container = $("#proList");
+  container.textContent = "Chargement...";
+
+  onValue(ref(db, "reservations"), snap => {
+    const data = snap.val() || {};
+    const all = Object.values(data)
+      .filter(r =>
+        r.facture?.type === "PRO" &&
+        r.facture?.status === "Pas encodé" &&
+        r.facture?.nom
+      );
+
+    if (!all.length) {
+      container.innerHTML = "<em>Aucune fiche PRO non encodée.</em>";
+      return;
+    }
+
+    // Trie alphabétiquement selon le nom normalisé
+    all.sort((a, b) => normalizeName(a.facture.nom).localeCompare(normalizeName(b.facture.nom)));
+
+    const html = all.map(r => `
+      <div style="margin-bottom:10px;border-bottom:1px solid #eee;padding-bottom:6px;">
+        <strong>${r.facture.nom}</strong><br>
+        ${r.facture.rue || ""}<br>
+        TVA: ${r.facture.tva || "-"}<br>
+        📞 ${r.facture.telephone || "-"} — ✉️ ${r.facture.email || "-"}
+      </div>
+    `).join("");
+
+    container.innerHTML = html;
+  }, { onlyOnce: true });
+}
+
+  // === Gestion du paiement (Cash / Wero) ===
+async function handlePay(id, method) {
+  try {
+    const db      = window.db;
+    const refFn   = window.firebaseRef;
+    const updateFn= window.firebaseUpdate;
+    const getFn   = window.firebaseGet;
+
+    if (!db || !refFn || !updateFn) {
+      console.error("Firebase non initialisé (db/ref/update manquants).");
+      return;
+    }
+
+    const r = refFn(db, "reservations/" + id);
+
+    // Lire la réservation
+    const snap = await getFn(r);
+    const d = snap.exists() ? snap.val() : {};
+
+    // Construire la mise à jour
+    const updates = { payMethod: method };
+
+    const ok = method === "cash" || method === "wero";
+
+    if (d.type === "LFT") {
+      const prix = parseFloat(d.prixLFT);
+      updates.somme = ok && isFinite(prix) ? prix : null;
+    } else {
+      const prix = parseFloat(d.aPayer);
+      updates.somme = ok && isFinite(prix) ? prix : null;
+    }
+
+    updates.paid = ok;
+    updates.paidAt = ok ? Date.now() : null;
+
+    // Appliquer
+    await updateFn(r, updates);
+
+    console.log("✅ Paiement mis à jour :", updates);
+
+  } catch (e) {
+    console.error("Erreur handlePay:", e);
+  }
+}
+
+// ✅ Rendre accessible depuis onclick du HTML
+window.handlePay = handlePay;
+
+
+
+</script>
+<script>
+
+
+
+</script>
+
+<style>
+  /* === Bouton Calculette Compact SVG Orange/Blanc === */
+  #calc-toggle-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s ease;
+  }
+
+  #calc-toggle-btn:hover {
+    transform: scale(1.15);
+  }
+</style>
+<style>
+  #calc-toggle-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    margin: 0;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s ease;
+  }
+
+  #calc-toggle-btn svg {
+    display: block;
+  }
+
+  #calc-toggle-btn:hover {
+    transform: scale(1.15);
+  }
+</style>
+
+
+
+
+
+
+
+
+<div id="weekContainer" style="display: none; padding: 20px;">
+
+</div>
+<!-- ================= SECTION CALCUL ================= -->
+<section id="calcul" style="
+  display:none;
+  opacity:0;
+  transition:opacity .4s ease;
+  background:linear-gradient(135deg, #ff9b42, #7ccf45, #b36dff);
+  padding:50px 20px;
+  font-family:'Lexend', sans-serif;
+  color:white;
+  text-align:center;
+  border-radius:20px;
+  margin:40px auto;
+  max-width:600px;
+">
+
+  <h2 style="margin-top:0;margin-bottom:20px;font-size:2rem;">Calculateur de tarif</h2>
+
+  <div class="simulateur" style="
+    background:rgba(255,255,255,0.9);
+    border-radius:18px;
+    padding:25px;
+    max-width:500px;
+    margin:0 auto;
+    box-shadow:0px 10px 25px rgba(0,0,0,0.15);
+    color:#333;
+    backdrop-filter:blur(6px);
+  ">
+
+    <!-- TYPE -->
+    <label for="type" style="display:block;margin-top:10px;font-weight:600;">Type de prestation</label>
+    <select id="type" style="
+      width:100%;padding:12px;border-radius:10px;
+      border:1px solid #d0d0d0;margin-top:6px;">
+      <option value="oneShot">One Shot (1 pièce)</option>
+      <option value="30min">30 minutes</option>
+      <option value="1h">1 heure</option>
+      <option value="1h30">1 h 30</option>
+      <option value="2h">2 h</option>
+      <option value="2h30">2 h 30</option>
+      <option value="3h">3 h</option>
+      <option value="3h30">3 h 30</option>
+      <option value="4h">4 h</option>
+    </select>
+
+    <!-- VILLE -->
+    <label for="ville" style="display:block;margin-top:20px;font-weight:600;">Ville ou code postal</label>
+    <input id="ville" type="text" placeholder="Ex. Seraing (4100)" list="suggestions" style="
+      width:100%;padding:12px;border-radius:10px;border:1px solid #d0d0d0;margin-top:6px;">
+    <datalist id="suggestions"></datalist>
+
+    <!-- RESULT -->
+    <div id="resultat" style="
+      margin-top:25px;
+      background:#f6f6f6;
+      padding:20px;
+      border-radius:14px;
+      font-size:16px;
+      text-align:left;
+      line-height:1.6;
+      border:1px solid #e0e0e0;
+    ">
+      Prix total : 0 €
+    </div>
+
+    <!-- PRINT BUTTON -->
+    <button onclick="imprimerDevis()" style="
+      margin-top:20px;
+      background:linear-gradient(135deg, #ff9b42, #7ccf45, #b36dff);
+      border:none;
+      padding:12px 22px;
+      border-radius:12px;
+      color:white;
+      font-size:16px;
+      cursor:pointer;
+      width:100%;
+      font-weight:700;
+    ">Imprimer le devis</button>
+
+  </div>
+</section>
+
+
+
+<script>
+const KM_INCLUS = 10;
+const PRIX_KM = 0.5;
+const VITESSE_CAMION = 50; // km/h → demandé
+
+// Durées en demi-heures
+const DUREES = {
+  "30min": 1,
+  "1h": 2,
+  "1h30": 3,
+  "2h": 4,
+  "2h30": 5,
+  "3h": 6,
+  "3h30": 7,
+  "4h": 8
+};
+
+// DOM
+const typeEl = document.getElementById('type');
+const villeEl = document.getElementById('ville');
+const resEl = document.getElementById('resultat');
+const suggestions = document.getElementById('suggestions');
+const btnCalcul = document.getElementById('btnCalculateur');
+const sectionCalcul = document.getElementById('calcul');
+
+// Charger communes
+window.COMMUNES_LIST = [];
+fetch("communes.json")
+  .then(r => r.json())
+  .then(communes => {
+    window.COMMUNES_LIST = communes;
+    communes.forEach(c => {
+      const opt = document.createElement("option");
+      opt.value = `${c.nom} (${c.cp})`;
+      opt.dataset.distance = c.distance;
+      suggestions.appendChild(opt);
+    });
+  });
+
+// Trouver distance
+function findDistance(villeInput) {
+  const m = villeInput.match(/(.+)\s+\((\d+)\)$/);
+  if (!m) return null;
+  const nom = m[1].trim();
+  const cp = m[2];
+  const row = window.COMMUNES_LIST.find(c => c.nom === nom && c.cp == cp);
+  return row ? row.distance : null;
+}
+
+// Calcul temps trajet
+function calculTemps(distance) {
+  const heures = distance / VITESSE_CAMION;
+  const h = Math.floor(heures);
+  const m = Math.round((heures - h) * 60);
+  if (h === 0) return `${m} min`;
+  return `${h} h ${m} min`;
+}
+
+// Calcul principal
+function calculer() {
+  const type = typeEl.value;
+  const ville = villeEl.value.trim();
+  const distance = findDistance(ville);
+
+  if (distance == null) {
+    resEl.innerText = "Veuillez sélectionner une commune valide.";
+    return;
+  }
+
+  // 1) Forfait
+  let forfait = 0;
+  if (type === "oneShot") forfait = 85;
+  else forfait = 60 + (DUREES[type] * 30);
+
+  // 2) Déplacement
+  let kmSup = Math.max(0, distance - KM_INCLUS);
+  let prixKm = kmSup * PRIX_KM;
+
+  // 3) Temps trajet
+  const temps = calculTemps(distance);
+
+  // 4) Total
+  const total = forfait + prixKm;
+
+  // 5) Affichage
+  resEl.innerHTML = `
+    <strong>Forfait :</strong> ${forfait} €<br>
+    ${distance <= 10 
+      ? "<strong>Déplacement :</strong> Gratuit" 
+      : `<strong>Déplacement :</strong> ${prixKm.toFixed(2)} €`
+    }<br>
+    <strong>Distance :</strong> ${distance} km<br>
+    <strong>Temps estimé :</strong> ${temps}<br>
+    <hr>
+    <strong style="font-size:18px;">TOTAL : ${total.toFixed(2)} € TTC</strong>
+  `;
+}
+
+// Bouton calculateur
+btnCalcul.addEventListener('click', e => {
+  e.preventDefault();
+  if (sectionCalcul.style.display === 'none' || sectionCalcul.style.display === '') {
+    sectionCalcul.style.display = 'block';
+    setTimeout(() => sectionCalcul.style.opacity = '1', 50);
+    sectionCalcul.scrollIntoView({ behavior: 'smooth' });
+  } else {
+    sectionCalcul.style.opacity = '0';
+    setTimeout(() => sectionCalcul.style.display = 'none', 300);
+  }
+});
+
+// Auto update
+typeEl.addEventListener('change', calculer);
+villeEl.addEventListener('change', calculer);
+
+// Impression
+function imprimerDevis() {
+  window.print();
+}
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+</body>
+
+</html>
