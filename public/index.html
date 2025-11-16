@@ -1807,15 +1807,30 @@ function getFacture() {
     ? (parseFloat($("#prixLFT").value) || null)
     : null,
 
-  // ✅ Somme en admin :
-  // - EXP : somme = aPayer
-  // - LFT : jamais ici (elle sera mise/retirée lors du choix de paiement)
-  somme: (selectedType === "EXP")
-    ? (parseFloat($("#aPayer").value) || null)
-    : null,
+  
 
   updatedAt: Date.now()
 };
+/*  
+🔧 SOMME :
+- Création EXP → somme = 70% de aPayer
+- Création LFT → somme = null (payée plus tard)
+- Modification → conserver l’ancienne somme
+*/
+if (!editingId) {
+  // Création
+  if (selectedType === "EXP") {
+    const brut = parseFloat($("#aPayer").value);
+    data.somme = isFinite(brut) ? (brut * 0.70).toFixed(2) : null;
+  } else {
+    data.somme = null; // #LIFT à la création → somme définie au paiement
+  }
+} else {
+  // Modification → récupérer et conserver l'ancienne somme
+  const snapOld = await get(ref(db, "reservations/" + editingId));
+  const old = snapOld.val() || {};
+  data.somme = (old.somme !== undefined) ? old.somme : null;
+}
 
 
       if (!data.client) {
@@ -2189,60 +2204,113 @@ if (d.type === "LFT") {
     // 🔢 Calcul des totaux initiaux
     updateTotals();
 
-   // === Gestion des champs Somme (€) ===
-document.querySelectorAll('.admin-somme').forEach(inp => {
-  // debounce générique
-  const debounce = (fn, delay = 400) => {
-    let t; 
-    return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), delay); };
-  };
+  // === Gestion des champs Somme (€) ===
+document.querySelectorAll('#adminEXP .admin-somme').forEach(inp => {
 
-  const colorize = () => {
-    const row = inp.closest('tr');
-    const vpCell = row?.querySelector('td:nth-child(7)');
-    const vpActif = vpCell && vpCell.textContent.includes('✔️');
-    inp.style.color = vpActif ? 'red' : 'black';
-  };
 
-  const save = async () => {
-    // ne rien faire si vide
+  // indique si la valeur vient de Firebase (true)
+  // ou si l’utilisateur a tapé au clavier (false)
+  inp.dataset.fromFirebase = "1";
+
+  // --- appliquer -30% UNIQUEMENT si utilisateur a modifié ---
+  const applyReductionAndSave = async () => {
+
+    // ⛔ si c'est un rechargement Firebase -> on NE touche PAS
+    if (inp.dataset.fromFirebase === "1") return;
+
     if (!inp.value || !inp.value.trim()) return;
 
-    // virgule -> point
-    const raw = inp.value.replace(',', '.');
+    // convertir virgule -> point
+    let raw = inp.value.replace(",", ".");
+    let montant = parseFloat(raw);
+    if (!isFinite(montant)) return;
 
-    // nombre valide ?
-    const num = Number(raw);
-    if (!isFinite(num)) return;
+    // appliquer réduction
+    let net = montant * 0.70;
 
-    // push vers Firebase
+    // afficher
+    inp.value = net.toFixed(2);
+
+    // sauvegarder
     const id = inp.dataset.id;
-    await update(ref(db, "reservations/" + id), { somme: num });
+    await update(ref(db, "reservations/" + id), { somme: net });
 
-    showToast("💰 Somme enregistrée", "#16a34a");
     updateTotals();
   };
 
-  const debouncedSave = debounce(save, 500);
-
-  // Pendant la saisie : on laisse taper librement, on recolorie, on sauve en debounced
-  inp.addEventListener('input', () => {
-    colorize();
-    debouncedSave();
+  // --- quand l'utilisateur tape ---
+  inp.addEventListener("input", () => {
+    inp.dataset.fromFirebase = "0";  // saisie utilisateur
   });
 
-  // À la sortie du champ : on normalise visuellement à 2 décimales et on sauve immédiatement
-  inp.addEventListener('blur', async () => {
-    if (!inp.value || !inp.value.trim()) return;
-    const raw = inp.value.replace(',', '.');
-    const num = Number(raw);
-    if (isFinite(num)) {
-      inp.value = num.toFixed(2); // normalisation visuelle
-      colorize();
-      await save(); // save immédiate
-    }
+  // --- quand il sort du champ ---
+  inp.addEventListener("blur", async () => {
+    inp.dataset.fromFirebase = "0";  // saisie utilisateur
+    await applyReductionAndSave();
   });
+
+  // --- détecter recharge Firebase ---
+  const observer = new MutationObserver(() => {
+    // une valeur est injectée depuis Firebase → ne PAS réduire
+    inp.dataset.fromFirebase = "1";
+  });
+  observer.observe(inp, { characterData: true, subtree: true });
 });
+// === Sécurisation des sommes pour #LIFT (aucune réduction) ===
+document.querySelectorAll('#adminLFT .admin-somme').forEach(inp => {
+
+  // Indique si la valeur vient de Firebase (true) 
+  // ou si l'utilisateur a modifié manuellement (false)
+  inp.dataset.fromFirebase = "1";
+
+  const secureAndSave = async () => {
+
+    // ⛔ Si c'est une mise à jour venant de Firebase → NE PAS modifier
+    if (inp.dataset.fromFirebase === "1") return;
+
+    // Récupération propre du montant
+    let raw = inp.value.replace(",", ".");
+    let montant = parseFloat(raw);
+
+    // 🔒 Si valeur invalide → restaurer l'ancienne depuis Firebase
+    if (!isFinite(montant) || montant < 0) {
+      const id = inp.dataset.id;
+      const snap = await get(ref(db, "reservations/" + id));
+      const old = snap.val() || {};
+      inp.value = old.somme || "";
+      return;
+    }
+
+    // Nettoyage : 2 décimales
+    montant = parseFloat(montant.toFixed(2));
+
+    // Sauvegarde propre dans Firebase
+    const id = inp.dataset.id;
+    await update(ref(db, "reservations/" + id), { somme: montant });
+
+    // Recalcul des totaux LIFT
+    updateTotals();
+  };
+
+  // Quand l'utilisateur tape au clavier
+  inp.addEventListener("input", () => {
+    inp.dataset.fromFirebase = "0"; // saisie manuelle
+  });
+
+  // Quand l'utilisateur termine la saisie
+  inp.addEventListener("blur", async () => {
+    inp.dataset.fromFirebase = "0";
+    await secureAndSave();
+  });
+
+  // Surveiller les modifications faites par Firebase
+  const observer = new MutationObserver(() => {
+    inp.dataset.fromFirebase = "1"; // recharge Firebase → pas de traitement
+  });
+  observer.observe(inp, { characterData: true, subtree: true });
+
+});
+
 
 
     // === Surveille les changements de VP en direct ===
@@ -2266,31 +2334,62 @@ document.querySelectorAll('.admin-somme').forEach(inp => {
 }
 
   function updateTotals() {
-  let totalExpRouge = 0, totalExpNoir = 0;
-  let totalLftRouge = 0, totalLftNoir = 0;
+  // ----- Totaux LIFT EXPRESS -----
+  // Les montants dans les cases sont déjà NET (70%)
+  let totalNet = 0;        // Sommes NON-VP (nettes)
+  let totalAcomptes = 0;   // Sommes VP (acompte wero/cash)
 
   document.querySelectorAll("#adminEXP tr").forEach(tr => {
     const inp = tr.querySelector(".admin-somme");
     if (!inp) return;
+
     const val = parseFloat(inp.value) || 0;
     const isVP = inp.style.color === "red";
-    if (isVP) totalExpRouge += val; else totalExpNoir += val;
+
+    if (isVP) {
+      totalAcomptes += val;     // VP = acomptes
+    } else {
+      totalNet += val;          // NON-VP = montants à facturer (déjà 70%)
+    }
   });
+
+  // On peut reconstituer un "brut" indicatif si tu veux le voir
+  const brut = totalNet / 0.70;       // info uniquement, pas utilisé dans les calculs
+  const tva  = totalNet * 0.21;       // TVA 21% sur le NET
+  const ttc  = totalNet + tva;        // TTC
+  const totalFinal = ttc - totalAcomptes;   // on retire les acomptes
+
+  const expTxt =
+    `🔴 Brut: ${brut.toFixed(2)} € — ` +
+    `Net(70%): ${totalNet.toFixed(2)} € — ` +
+    `TVA21%: ${tva.toFixed(2)} € — ` +
+    `TTC: ${ttc.toFixed(2)} € — 💎 ` +
+    `Acompte: -${totalAcomptes.toFixed(2)} € — ` +
+    `🔷 Total à facturer: ${totalFinal.toFixed(2)} €`;
+
+  document.getElementById("totalEXP").textContent = expTxt;
+
+  // ----- Totaux #LIFT (inchangé) -----
+  let totalLftRouge = 0, totalLftNoir = 0;
 
   document.querySelectorAll("#adminLFT tr").forEach(tr => {
     const inp = tr.querySelector(".admin-somme");
     if (!inp) return;
+
     const val = parseFloat(inp.value) || 0;
     const isVP = inp.style.color === "red";
-    if (isVP) totalLftRouge += val; else totalLftNoir += val;
+
+    if (isVP) totalLftRouge += val;
+    else totalLftNoir += val;
   });
 
-  const expTxt = `🟥 VP: ${totalExpRouge.toFixed(2)} € — ⚫️ Non-VP: ${totalExpNoir.toFixed(2)} €`;
-  const lftTxt = `🟥 VP: ${totalLftRouge.toFixed(2)} € — ⚫️ Non-VP: ${totalLftNoir.toFixed(2)} €`;
+  const lftTxt =
+    `🔴 VP: ${totalLftRouge.toFixed(2)} € — ⚫ Non-VP: ${totalLftNoir.toFixed(2)} €`;
 
-  document.getElementById("totalEXP").textContent = expTxt;
   document.getElementById("totalLFT").textContent = lftTxt;
 }
+
+
 
 
    monthPicker.addEventListener("change", () => listenMonth(monthPicker.value));
@@ -3489,16 +3588,6 @@ function imprimerDevis() {
   window.print();
 }
 </script>
-
-
-
-
-
-
-
-
-
-
 
 
 
