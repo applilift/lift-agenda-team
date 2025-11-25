@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Paiement Forfait</title>
+<link rel="stylesheet" href="../styles.css">
+</head>
+
+<body>
+
+<h2>Paiement Forfait</h2>
+
+<div class="box">
+    <p>Prix du forfait :</p>
+    <h3 id="prixForfaitAffichage">0 €</h3>
+
+    <button id="payerForfait">Payer le forfait</button>
+</div>
+
+<!-- Stripe -->
+<script src="https://js.stripe.com/v3/"></script>
+
+<script>
+
+// =====================================================
+// PRIX FORFAIT (modifiable ici)
+// =====================================================
+
+const prixForfait = 60;  // ← MODIFIE ICI (ex : 85 si tu veux)
+
+// affichage du prix
+
+document.getElementById("prixForfaitAffichage").textContent =
+    prixForfait.toFixed(2) + " €";
+
+
+// =====================================================
+// Paiement Stripe
+// =====================================================
+
+document.getElementById("payerForfait").addEventListener("click", lancerPaiementForfait);
+
+async function lancerPaiementForfait() {
+
+    try {
+        const response = await fetch("/.netlify/functions/create-checkout-session", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                amount: prixForfait,
+                description: "Paiement Forfait Lift"
+            })
+        });
+
+        const data = await response.json();
+
+        const stripe = Stripe("pk_test_51SXNhuQBlPkBPQsBNpCjAXfbaeCd8pWKYy2qYiN0tUZQFMqkoRPydrtsI6PSLFjpecdYFp0zDKTMCQxeeVFGq1YX00kTjbvtsw"); // ← TA Clé Publique Stripe
+
+        stripe.redirectToCheckout({ sessionId: data.sessionId });
+
+    } catch (err) {
+        alert("Erreur : impossible de lancer le paiement.");
+        console.error(err);
+    }
+}
+
+</script>
+
+</body>
+</html>

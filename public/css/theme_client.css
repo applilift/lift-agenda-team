@@ -1,0 +1,352 @@
+/* ============================
+   BASE FORMULAIRES CLIENT
+   ============================ */
+
+html, body {
+  margin: 0;
+  padding: 0;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: #4d6539;              /* fond vert foncé, comme ton calculateur */
+  color: #2b3a25;
+}
+
+/* Conteneur principal de la page client (carte blanche au centre) */
+.page-container {
+  max-width: 760px;
+  margin: 24px auto;
+  padding: 24px 20px;
+  background: #ffffff;
+  border-radius: 18px;
+  box-shadow: 0 12px 32px rgba(0,0,0,0.18);
+}
+
+/* Titres */
+h1 {
+  font-size: 1.6rem;
+  margin: 0 0 0.3rem;
+  color: #2b3a25;
+}
+
+h2 {
+  font-size: 1.15rem;
+  margin: 1.1rem 0 0.4rem;
+  color: #34452a;
+}
+
+h3 {
+  font-size: 1rem;
+  margin: 0.8rem 0 0.3rem;
+  color: #3d4f31;
+}
+
+/* Petites annotations explicatives */
+.hint {
+  font-size: 0.78rem;
+  color: #5a6b49;
+  margin-top: 2px;
+}
+
+/* Formulaire */
+form {
+  margin-top: 0.8rem;
+}
+
+/* Labels + champs */
+label {
+  display: block;
+  font-size: 0.9rem;
+  margin-top: 0.5rem;
+  color: #3b4a30;
+}
+
+/* Inputs, selects, textareas arrondis et "fondus" */
+input,
+select,
+textarea {
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 3px;
+  padding: 9px 11px;
+  border-radius: 10px;
+  border: 1px solid #d3dece;
+  background: #f9fcf6;
+  font-size: 0.9rem;
+  color: #2b3a25;
+  outline: none;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: #4d6539;
+  box-shadow: 0 0 0 2px rgba(77,101,57,0.18);
+  background: #ffffff;
+}
+
+/* Textarea */
+textarea {
+  resize: vertical;
+  min-height: 70px;
+}
+
+/* Séparateur */
+hr {
+  border: none;
+  border-top: 1px solid #e1ebdb;
+  margin: 1.1rem 0;
+}
+
+/* ============================
+   BOUTONS
+   ============================ */
+
+button,
+.btn,
+.btn-primary {
+  display: inline-block;
+  margin-top: 0.8rem;
+  padding: 9px 18px;
+  border-radius: 999px;
+  border: none;
+  background: #4d6539;
+  color: #ffffff;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  letter-spacing: 0.02em;
+  box-shadow: 0 6px 14px rgba(0,0,0,0.22);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+/* accent bleu-vert en léger halo */
+button::after,
+.btn-primary::after {
+  content: none !important;        /* supprime totalement le pseudo-élément */
+  position: absolute;
+  pointer-events: none !important; /* évite tout blocage de clic */
+}
+
+
+/* pour éviter souci de position sur certains contextes */
+button,
+.btn-primary {
+  position: relative;
+}
+
+button:hover,
+.btn-primary:hover {
+  background: #425530;
+  transform: translateY(-1px);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.25);
+}
+
+button:active,
+.btn-primary:active {
+  transform: translateY(0);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+
+/* ============================
+   SLOTS / CRÉNEAUX
+   ============================ */
+
+.slots-wrapper {
+  margin-top: 10px;
+  padding: 12px;
+  background: #f6faf3;
+  border-radius: 12px;
+  border: 1px solid #d6e4cd;
+}
+
+/* Bouton créneau standard */
+.slot-btn {
+  display: block;
+  width: 100%;
+  margin: 4px 0;
+  padding: 9px 12px;
+  border-radius: 10px;
+  border: 1px solid #cdd8c9;
+  background: #ffffff;
+  font-size: 0.9rem;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s ease-in-out;
+  color: #30412a;
+}
+
+.slot-btn:hover {
+  background: #f0f7ec;
+  border-color: #9fb69b;
+}
+
+/* Créneau optimisé – visuellement premium */
+.slot-optimise {
+  background: #e8f3e3;
+  border: 2px solid #4d6539;
+  box-shadow: 0 3px 10px rgba(77,101,57,0.18);
+  font-weight: 600;
+  position: relative;
+}
+
+/* Étoile discrète côté droit */
+.slot-optimise::before {
+  content: "★";
+  color: #00ef97;              /* ton bleu-vert en touche légère */
+  font-size: 0.9rem;
+  position: absolute;
+  top: 8px;
+  right: 10px;
+}
+
+/* Badge "Optimisé / économie" */
+.badge-opt {
+  display: inline-block;
+  margin-top: 5px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: #00ef97;         /* accent turquoise */
+  color: #12402b;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+/* Hover encore plus "premium" */
+.slot-optimise:hover {
+  background: #dbeed3;
+  transform: translateY(-1px);
+  box-shadow: 0 5px 14px rgba(77,101,57,0.22);
+}
+
+/* Message après sélection de créneau */
+.message-date {
+  padding: 8px 10px;
+  background: #e8f5e1;
+  border-radius: 8px;
+  border: 1px solid #cfe5c5;
+  margin-top: 8px;
+  font-size: 0.85rem;
+  color: #314126;
+}
+
+/* ============================
+   AUTOCOMPLÉTION COMMUNES
+   ============================ */
+
+.field-with-suggestions {
+  position: relative;
+}
+
+.suggestion-box {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: #ffffff;
+  border: 1px solid #cfd8c9;
+  border-radius: 10px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.16);
+  max-height: 220px;
+  overflow-y: auto;
+  margin-top: 4px;
+  z-index: 50;
+  font-size: 0.85rem;
+}
+
+.suggestion-item {
+  padding: 6px 10px;
+  cursor: pointer;
+  color: #30412a;
+}
+
+.suggestion-item:hover {
+  background: #eef4ea;
+}
+
+/* ============================
+   ACCORDION (conditions)
+   ============================ */
+
+.accordion {
+  margin-top: 1rem;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: #f2f7ee;
+  border: 1px solid #d3e1cb;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  color: #34452a;
+  position: relative;
+}
+
+.accordion::after {
+  content: "▾";
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.8rem;
+}
+
+/* Quand on ouvre (tu peux gérer la classe .open via JS si besoin) */
+.accordion.open::after {
+  content: "▴";
+}
+
+.accordion-content {
+  margin-top: 6px;
+  padding: 8px 10px 10px;
+  border-radius: 10px;
+  background: #f7faf5;
+  border: 1px solid #e0ebd8;
+  font-size: 0.85rem;
+  color: #3a4c30;
+}
+
+/* Checkbox conditions */
+.accordion-content label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+/* ============================
+   ÉTATS UTILITAIRES
+   ============================ */
+
+.hidden {
+  display: none !important;
+}
+
+/* ============================
+   RESPONSIVE
+   ============================ */
+
+@media (max-width: 600px) {
+  .page-container {
+    margin: 12px;
+    padding: 16px 14px;
+    border-radius: 14px;
+  }
+
+  h1 {
+    font-size: 1.35rem;
+  }
+
+  h2 {
+    font-size: 1.05rem;
+  }
+
+  .slot-btn {
+    font-size: 0.85rem;
+  }
+
+  button,
+  .btn-primary {
+    width: 100%;
+    text-align: center;
+  }
+}
+

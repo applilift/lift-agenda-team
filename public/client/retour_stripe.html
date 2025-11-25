@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Retour Paiement</title>
+<link rel="stylesheet" href="../styles.css">
+</head>
+
+<body>
+
+<div class="box" style="text-align:center; padding:20px;">
+
+    <h2 id="titre"></h2>
+    <p id="message"></p>
+
+    <div id="actions"></div>
+
+</div>
+
+<script>
+// =====================================================
+// Lecture des paramètres de Stripe
+// =====================================================
+
+const params = new URLSearchParams(location.search);
+
+const status = params.get("status");
+const type = params.get("type");
+const amount = params.get("amount");
+
+// Eléments HTML
+const titre   = document.getElementById("titre");
+const message = document.getElementById("message");
+const actions = document.getElementById("actions");
+
+
+// =====================================================
+// Paiement réussi
+// =====================================================
+
+if (status === "success") {
+
+    titre.textContent = "🎉 Paiement réussi !";
+    message.innerHTML =
+        "Votre paiement de <strong>" + amount + " €</strong> a bien été accepté.<br>" +
+        "Merci pour votre confiance.";
+
+    actions.innerHTML = `
+        <p>Vous allez être redirigé automatiquement...</p>
+    `;
+
+    // redirection automatique vers confirmation.html
+    setTimeout(() => {
+        window.location.href = "confirmation.html?type=" + type + "&amount=" + amount;
+    }, 3000);
+}
+
+
+// =====================================================
+// Paiement annulé
+// =====================================================
+
+else {
+
+    titre.textContent = "⚠️ Paiement annulé";
+    message.innerHTML =
+        "Votre paiement n’a pas pu être finalisé.";
+
+    actions.innerHTML = `
+        <button onclick="history.back()">Réessayer</button>
+        <a href="../index.html">
+            <button style="margin-top:10px;">Retour à l’accueil</button>
+        </a>
+    `;
+}
+
+</script>
+
+</body>
+</html>
+

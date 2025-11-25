@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Récapitulatif</title>
+  <link rel="stylesheet" href="../css/theme_client.css">
+
+  <style>
+    body { font-size: 14px; }
+    h1 { margin-bottom: 0.5rem; font-size: 1.6rem; }
+    h2 { margin-top: 1.4rem; font-size: 1.2rem; }
+
+    .recap-box {
+      background: #f6f9f4;
+      padding: 15px;
+      border-radius: 10px;
+      border: 1px solid #dce7d5;
+      margin-top: 10px;
+    }
+
+    .row {
+      display: flex;
+      justify-content: space-between;
+      padding: 6px 0;
+      border-bottom: 1px solid #e2ebdf;
+      font-size: 0.92rem;
+    }
+
+    .row:last-child {
+      border-bottom: none;
+    }
+
+    .row span {
+      color: #4a5a42;
+    }
+
+    .total-row {
+      margin-top: 16px;
+      padding: 12px;
+      font-size: 1.1rem;
+      background: #e8f1e0;
+      border-radius: 8px;
+      border: 1px solid #d3e3cb;
+      display: flex;
+      justify-content: space-between;
+      font-weight: 600;
+    }
+
+    .btn-full {
+      width: 100%;
+      margin-top: 12px;
+      padding: 12px;
+      font-size: 1rem;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="page-container">
+
+  <h1>Récapitulatif</h1>
+  <p>Vérifiez vos informations avant de procéder au paiement.</p>
+
+  <div id="recapBox" class="recap-box"></div>
+
+  <button class="btn btn-primary btn-full" id="payerForfait">
+    Payer votre forfait de 60 € 
+  </button>
+
+  <button class="btn btn-secondary btn-full" id="payerTotal">
+    Payer la totalité maintenant
+  </button>
+
+</div>
+
+<script>
+// =====================================================
+// CONFIG TARIFS
+// =====================================================
+const FORFAIT = 60;
+const ONE_SHOT_TARIF = 85;
+const PRIX_30_MIN = 30;
+const KM_INCLUS = 10;
+const PRIX_KM = 0.5;
+
+let communesData = null;
+
+// charge communes.json
+fetch("../communes.json")
+  .then(r => r.json())
+  .then(data => communesData = data)
+  .then(() => genererRecap());
+
+// =====================================================
+// Trouve la commune depuis "Rue, CP Commune (CP)"
+// =====================================================
+function detecterCommune(adresse) {
+  if (!adresse) return null;
+  let match = adresse.match(/\((\d{4})\)/);
+  if (!match) return null;
+  return communesData.find(c => c.cp == match[1]) || null;
+}
+
+// =====================================================
+// RÉCAP COMPLET
+// =====================================================
+function genererRecap() {
+  const p = new URLSearchParams(location.search);
+  const type = p.get("type");
+
+  let html = "";
+  let total = 0;
+
+  let prixForfait = 0;
+  let prixDuree = 0;
+  let prixDeplacement = 0;
+
+  // ===============================
+  // ONE SHOT
+  // ===============================
+  if (type === "one_shot") {
+    const objet = p.get("objet");
+    const adresseA = p.get("adresseA");
+
+    const communeObj = detecterCommune(adresseA);
+    const dist = communeObj ? communeObj.distance : 0;
+
+    const kmFactures = Math.max(0, dist - KM_INCLUS);
+
+    prixForfait = ONE_SHOT_TARIF;
+    prixDeplacement = kmFactures * PRIX_KM;
+    total = prixForfait + prixDeplacement;
+
+    html += `
+      <h2>One Shot</h2>
+      <div class="row"><span>Objet</span><strong>${objet}</strong></div>
+      <div class="row"><span>Adresse</span><strong>${adresseA}</strong></div>
+      <div class="row"><span>Distance</span><strong>${dist} km</strong></div>
+      <div class="row"><span>Forfait</span><strong>${prixForfait.toFixed(2)} €</strong></div>
+      <div class="row"><span>Déplacement</span><strong>${prixDeplacement.toFixed(2)} €</strong></div>
+    `;
+  }
+
+  // ===============================
+  // SIMPLE
+  // ===============================
+  if (type === "simple") {
+    const adresseA = p.get("adresseA");
+    const dureeSup = parseFloat(p.get("dureeSup"));
+    const dureeTotale = 1 + dureeSup;
+
+    const communeObj = detecterCommune(adresseA);
+    const dist = communeObj ? communeObj.distance : 0;
+    const kmFactures = Math.max(0, dist - KM_INCLUS);
+
+    prixForfait = FORFAIT;
+    prixDuree = dureeTotale * 60;
+    prixDeplacement = kmFactures * PRIX_KM;
+    total = prixForfait + prixDuree + prixDeplacement;
+
+    html += `
+      <h2>Lift Simple</h2>
+      <div class="row"><span>Adresse</span><strong>${adresseA}</strong></div>
+      <div class="row"><span>Durée totale</span><strong>${dureeTotale} h</strong></div>
+      <div class="row"><span>Distance</span><strong>${dist} km</strong></div>
+      <div class="row"><span>Forfait</span><strong>${prixForfait} €</strong></div>
+      <div class="row"><span>Durée</span><strong>${prixDuree.toFixed(2)} €</strong></div>
+      <div class="row"><span>Déplacement</span><strong>${prixDeplacement.toFixed(2)} €</strong></div>
+    `;
+  }
+
+  // ===============================
+  // DOUBLE
+  // ===============================
+  if (type === "double") {
+    const adresseA = p.get("adresseA");
+    const adresseB = p.get("adresseB");
+    const distAB = parseFloat(p.get("distanceAB"));
+    const dureeSup = parseFloat(p.get("dureeSup"));
+    const dureeTotale = 1.5 + dureeSup;
+
+    const communeObj = detecterCommune(adresseA);
+    const dist = communeObj ? communeObj.distance : 0;
+    const kmFactures = Math.max(0, dist - KM_INCLUS);
+
+    prixForfait = FORFAIT;
+    prixDuree = dureeTotale * 60;
+    prixDeplacement = kmFactures * PRIX_KM + distAB * PRIX_KM;
+    total = prixForfait + prixDuree + prixDeplacement;
+
+    html += `
+      <h2>Lift Double</h2>
+      <div class="row"><span>Adresse A</span><strong>${adresseA}</strong></div>
+      <div class="row"><span>Adresse B</span><strong>${adresseB}</strong></div>
+      <div class="row"><span>Distance A ↔ B</span><strong>${distAB} km</strong></div>
+      <div class="row"><span>Durée totale</span><strong>${dureeTotale} h</strong></div>
+      <div class="row"><span>Distance Sprimont → A</span><strong>${dist} km</strong></div>
+      <div class="row"><span>Forfait</span><strong>${prixForfait} €</strong></div>
+      <div class="row"><span>Durée</span><strong>${prixDuree.toFixed(2)} €</strong></div>
+      <div class="row"><span>Déplacement</span><strong>${prixDeplacement.toFixed(2)} €</strong></div>
+    `;
+  }
+
+  // TOTAL
+  html += `
+    <div class="total-row">
+      <span>Total TTC</span>
+      <strong>${total.toFixed(2)} €</strong>
+    </div>
+  `;
+
+  // Injection dans la box
+  document.getElementById("recapBox").innerHTML = html;
+
+  // Boutons
+  document.getElementById("payerForfait").onclick = () => {
+    location.href = "paiement_forfait.html?total=" + total + "&" + p.toString();
+  };
+
+  document.getElementById("payerTotal").onclick = () => {
+    location.href = "paiement_total.html?total=" + total + "&" + p.toString();
+  };
+}
+</script>
+
+</body>
+</html>
+

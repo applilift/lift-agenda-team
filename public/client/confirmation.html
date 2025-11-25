@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Confirmation</title>
+<link rel="stylesheet" href="../styles.css">
+</head>
+
+<body>
+
+<div class="box" style="padding: 20px; text-align: center;">
+
+    <h2>🎉 Réservation confirmée !</h2>
+
+    <p id="resume"></p>
+
+    <p>
+        Un email de confirmation vous sera envoyé avec le récapitulatif complet.
+    </p>
+
+    <a href="../index.html">
+        <button style="margin-top: 15px;">Retour à l’accueil</button>
+    </a>
+
+</div>
+
+<script>
+// =====================================================
+// Lecture des paramètres
+// =====================================================
+
+const params = new URLSearchParams(location.search);
+const type = params.get("type") || "réservation";
+const amount = params.get("amount") || "—";
+
+document.getElementById("resume").innerHTML =
+    "Votre <strong>" + type + "</strong> a bien été enregistrée.<br>" +
+    "Montant payé : <strong>" + amount + " €</strong>.";
+
+</script>
+
+</body>
+</html>
+
+

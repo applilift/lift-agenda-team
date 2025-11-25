@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Réservation One Shot</title>
+<link rel="stylesheet" href="../styles.css">
+</head>
+
+<body>
+
+<h2>One Shot (tarif fixe + distance)</h2>
+
+<form id="form-one-shot">
+
+    <!-- DATE -->
+    <label>Date :</label>
+    <input type="date" id="date" required>
+
+    <!-- CODE POSTAL -->
+    <label>Code postal :</label>
+    <input type="text" id="cp" required>
+    <div id="suggestions-cp" class="hidden"></div>
+
+    <!-- COMMUNE -->
+    <label>Commune :</label>
+    <input type="text" id="commune" required>
+
+    <!-- CRÉNEAUX -->
+    <div id="wrapper-creneaux" class="hidden">
+        <h3>Créneaux disponibles</h3>
+        <div id="creneaux-optimises"></div>
+        <div id="creneaux-libres"></div>
+    </div>
+
+    <h3>Total : <span id="prix-total">0 €</span></h3>
+
+    <button type="button" id="btn-payer">Payer</button>
+</form>
+
+<!-- STRIPE -->
+<script src="https://js.stripe.com/v3/"></script>
+
+<!-- TES SCRIPTS -->
+<script src="../communes_client.js"></script>
+<script src="../slot.js"></script>
+
+<script>
+
+// =====================================================
+// CALCUL PRIX ONE SHOT
+// =====================================================
+
+function calculerPrixOneShot() {
+
+    let prixBase = 85;   // Prix fixe One Shot
+    let cp = document.getElementById("cp").value;
+
+    // distance via ton fichier communes_client.js
+    let commune = communes.find(c => String(c.cp) === String(cp));
+    let distance = commune ? commune.distance : 0;
+
+    let prixDeplacement = distance * 0.5;
+
+    // bonus/malus optimisation
+    let optimisation = window.creneauOptimisation || 0;
+
+    let prixTotal = prixBase + prixDeplacement + optimisation;
+
+    document.getElementById("prix-total").textContent =
+        prixTotal.toFixed(2) + " €";
+
+    return prixTotal;
+}
+
+
+// =====================================================
+// QUAND L'USAGE CHOISIT UN CRÉNEAU
+// =====================================================
+
+window.onCreneauSelected = function (bonus) {
+    window.creneauOptimisation = bonus;
+    calculerPrixOneShot();
+};
+
+// recalcul automatique
+document.getElementById("cp").oninput = calculerPrixOneShot;
+
+
+// =====================================================
+// BOUTON PAYER
+// =====================================================
+
+document.getElementById("btn-payer").addEventListener("click", () => {
+    const prixTotal = calculerPrixOneShot();
+    lancerPaiement(prixTotal, "One Shot");
+});
+
+
+// =====================================================
+// INTÉGRATION STRIPE
+// =====================================================
+
+async function lancerPaiement(prixTotal, description) {
+
+    if (!prixTotal || prixTotal <= 0) {
+        alert("Le prix n’a pas pu être calculé.");
+        return;
+    }
+
+    try {
+        const response = await fetch("/.netlify/functions/create-checkout-session", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                amount: prixTotal,
+                description: description
+            })
+        });
+
+        const data = await response.json();
+
+        const stripe = Stripe("ppk_test_51SXNhuQBlPkBPQsBNpCjAXfbaeCd8pWKYy2qYiN0tUZQFMqkoRPydrtsI6PSLFjpecdYFp0zDKTMCQxeeVFGq1YX00kTjbvtsw");  // ← TA CLÉ PUBLIQUE STRIPE
+
+        stripe.redirectToCheckout({ sessionId: data.sessionId });
+    }
+    catch (e) {
+        console.error(e);
+        alert("Erreur lors du paiement.");
+    }
+}
+
+</script>
+
+</body>
+</html>
+
+
+

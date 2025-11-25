@@ -956,25 +956,43 @@ html {
   </button>
   <div class="dropdown-menu" id="adminMenu">
     <!-- Bouton 📝 .net -->
-<button class="dropdown-item" onclick="window.open(&#39;https://www.facture.net/389480/dashboard/accounting_files&#39;, &#39;_blank&#39;)" style="display:flex;flex-direction:column;align-items:center;padding:4px;">
-    <img src="./Agenda — Réservations_files/facture.png" alt="Facture.net" style="width:48px;height:48px;">
-  </button>
+<button class="dropdown-item" onclick="window.open('https://www.facture.net/389480/dashboard/accounting_files', '_blank')">
+    <img src="/icons/facture.png" alt="Facture.net" style="width:48px;height:48px;">
+</button>
 
-    <button class="dropdown-item" id="btnProAlphabet" title="Fiches PRO non encodées" style="display:flex;align-items:center;justify-content:center;padding:4px;">
-  <img src="./Agenda — Réservations_files/pro-icon.jpeg" alt="PRO" style="width:34px;height:34px;border-radius:6px;transition:transform 0.2s ease;">
+
+   <button class="dropdown-item" id="btnProAlphabet" title="Fiches PRO non encodées"
+        style="display:flex;align-items:center;justify-content:center;padding:4px;">
+
+  <img src="/icons/pro-icon.jpeg"
+       alt="PRO"
+       style="width:34px;height:34px;border-radius:6px;transition:transform 0.2s ease;">
 </button>
 
 
 
+
     <!-- @info (info) -->
- <button class="dropdown-item" onclick="window.open(&#39;https://mail.google.com/mail/u/0/#inbox&#39;, &#39;_blank&#39;)" style="display:flex;flex-direction:column;align-items:center;padding:4px;">
-    <img src="./Agenda — Réservations_files/lift_info.png" alt="#Lift info" style="width:48px;height:48px;">
-  </button>
+ <button class="dropdown-item"
+    onclick="window.open('https://mail.google.com/mail/u/0/#inbox', '_blank')"
+    style="display:flex;flex-direction:column;align-items:center;padding:4px;">
+    
+    <img src="/icons/lift_info.png"
+         alt="#Lift info"
+         style="width:48px;height:48px;">
+</button>
+
 
 <!-- @pro (vert) -->
-<button class="dropdown-item" onclick="window.open(&#39;https://mail.google.com/mail/u/1/#inbox&#39;, &#39;_blank&#39;)" style="display:flex;flex-direction:column;align-items:center;padding:4px;">
-    <img src="./Agenda — Réservations_files/lift_pro.png" alt="#Lift pro" style="width:48px;height:48px;">
-  </button>
+<button class="dropdown-item"
+    onclick="window.open('https://mail.google.com/mail/u/1/#inbox', '_blank')"
+    style="display:flex;flex-direction:column;align-items:center;padding:4px;">
+
+    <img src="/icons/lift_pro.png"
+         alt="#Lift pro"
+         style="width:48px;height:48px;">
+</button>
+
 
   </div>
 </div>
@@ -1938,18 +1956,18 @@ document.querySelector('.type-btn[data-type="LFT"]').classList.add("active");
       ? (d.payMethod
           ? (`
               <button class="pay-btn ${d.payMethod === 'cash' ? 'selected' : ''}" onclick="window.handlePay('${id}', 'cash')">
-                <img src="icons/cash-icon.png" alt="Cash">
+                <img src="/icons/cash-icon.png" alt="Cash">
               </button>
               <button class="pay-btn ${d.payMethod === 'wero' ? 'selected' : ''} ${d.payMethod === 'cash' ? 'hidden' : ''}" onclick="window.handlePay('${id}', 'wero')">
-                <img src="icons/wero-ero.png" alt="Wero">
+                <img src="/icons/wero-ero.png" alt="Wero">
               </button>
             `)
           : (`
               <button class="pay-btn" onclick="window.handlePay('${id}', 'cash')">
-                <img src="icons/cash-icon.png" alt="Cash">
+                <img src="/icons/cash-icon.png" alt="Cash">
               </button>
               <button class="pay-btn" onclick="window.handlePay('${id}', 'wero')">
-                <img src="icons/wero-ero.png" alt="Wero">
+                <img src="/icons/wero-ero.png" alt="Wero">
               </button>
             `)
         )
@@ -1959,7 +1977,7 @@ document.querySelector('.type-btn[data-type="LFT"]').classList.add("active");
 
         <span class="btn-wero-mobile" 
               onclick="openWero('${d.date}', '${d.start}', '${d.end}')">
-         <img src="icons/wero-ero.png" alt="Wero" class="wero-icon">
+         <img src="/icons/wero-ero.png" alt="Wero" class="wero-icon">
         </span>
 
         ${who}
@@ -2132,9 +2150,9 @@ if (d.type === "LFT") {
 
   ${
     d.payMethod === "cash"
-      ? `<img src="icons/cash-icon.png" style="width:22px;height:22px;">`
+      ? `<img src="/icons/cash-icon.png" style="width:22px;height:22px;">`
       : d.payMethod === "wero"
-        ? `<img src="icons/wero-ero.png" style="width:22px;height:22px;">`
+        ? `<img src="/icons/wero-ero.png" style="width:22px;height:22px;">`
         : ""
   }
 

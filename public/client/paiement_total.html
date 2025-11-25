@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Paiement Total</title>
+<link rel="stylesheet" href="../styles.css">
+</head>
+
+<body>
+
+<h2>Paiement du montant total</h2>
+
+<div class="box">
+    <p>Montant à régler :</p>
+    <h3 id="montantTotal">0 €</h3>
+
+    <button id="payerStripe">Procéder au paiement sécurisé</button>
+</div>
+
+<!-- Stripe -->
+<script src="https://js.stripe.com/v3/"></script>
+
+<script>
+
+// =====================================================
+// Lecture du prix depuis l’URL
+// =====================================================
+
+const params = new URLSearchParams(location.search);
+const total = parseFloat(params.get("total"));
+
+if (total && total > 0) {
+    document.getElementById("montantTotal").textContent = total.toFixed(2) + " €";
+} else {
+    document.getElementById("montantTotal").textContent = "Erreur : montant invalide.";
+}
+
+// =====================================================
+// Paiement Stripe
+// =====================================================
+
+document.getElementById("payerStripe").addEventListener("click", lancerPaiement);
+
+async function lancerPaiement() {
+
+    if (!total || total <= 0) {
+        alert("Le montant est invalide.");
+        return;
+    }
+
+    try {
+        const response = await fetch("/.netlify/functions/create-checkout-session", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                amount: total,
+                description: "Paiement Total Lift"
+            })
+        });
+
+        const data = await response.json();
+
+        const stripe = Stripe("pk_test_51SXNhuQBlPkBPQsBNpCjAXfbaeCd8pWKYy2qYiN0tUZQFMqkoRPydrtsI6PSLFjpecdYFp0zDKTMCQxeeVFGq1YX00kTjbvtsw");  // ← TA CLÉ PUBLIQUE
+
+        stripe.redirectToCheckout({ sessionId: data.sessionId });
+
+    } catch (err) {
+        alert("Impossible de lancer le paiement.");
+    }
+}
+
+</script>
+
+</body>
+</html>
+

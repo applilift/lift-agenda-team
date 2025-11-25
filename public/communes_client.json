@@ -1,0 +1,1297 @@
+[
+  {
+    "nom": "Amay",
+    "cp": "4540",
+    "distance": 35.7
+  },
+  {
+    "nom": "Amblève",
+    "cp": "4770",
+    "distance": 53.2
+  },
+  {
+    "nom": "Amblève",
+    "cp": "4771",
+    "distance": 53.5
+  },
+  {
+    "nom": "Ans",
+    "cp": "4430",
+    "distance": 29.5
+  },
+  {
+    "nom": "Ans",
+    "cp": "4431",
+    "distance": 30.4
+  },
+  {
+    "nom": "Ans",
+    "cp": "4432",
+    "distance": 34.9
+  },
+  {
+    "nom": "Anthisnes",
+    "cp": "4160",
+    "distance": 19.2
+  },
+  {
+    "nom": "Anthisnes",
+    "cp": "4163",
+    "distance": 22.5
+  },
+  {
+    "nom": "Anthisnes",
+    "cp": "4162",
+    "distance": 20.5
+  },
+  {
+    "nom": "Anthisnes",
+    "cp": "4161",
+    "distance": 19.6
+  },
+  {
+    "nom": "Arlon",
+    "cp": "6700",
+    "distance": 99.9
+  },
+  {
+    "nom": "Arlon",
+    "cp": "6704",
+    "distance": 98.8
+  },
+  {
+    "nom": "Arlon",
+    "cp": "6706",
+    "distance": 106.5
+  },
+  {
+    "nom": "Attert",
+    "cp": "6717",
+    "distance": 92.3
+  },
+  {
+    "nom": "Aubange",
+    "cp": "6792",
+    "distance": 112.0
+  },
+  {
+    "nom": "Aubange",
+    "cp": "6791",
+    "distance": 115.6
+  },
+  {
+    "nom": "Aubange",
+    "cp": "6790",
+    "distance": 115.0
+  },
+  {
+    "nom": "Aubel",
+    "cp": "4880",
+    "distance": 36.6
+  },
+  {
+    "nom": "Awans",
+    "cp": "4340",
+    "distance": 36.2
+  },
+  {
+    "nom": "Awans",
+    "cp": "4342",
+    "distance": 33.6
+  },
+  {
+    "nom": "Aywaille",
+    "cp": "4920",
+    "distance": 15.4
+  },
+  {
+    "nom": "Baelen",
+    "cp": "4837",
+    "distance": 36.8
+  },
+  {
+    "nom": "Bassenge",
+    "cp": "4690",
+    "distance": 38.3
+  },
+  {
+    "nom": "Bastogne",
+    "cp": "6600",
+    "distance": 66.4
+  },
+  {
+    "nom": "Berloz",
+    "cp": "4257",
+    "distance": 48.0
+  },
+  {
+    "nom": "Bertogne",
+    "cp": "6686",
+    "distance": 62.7
+  },
+  {
+    "nom": "Bertogne",
+    "cp": "6688",
+    "distance": 60.5
+  },
+  {
+    "nom": "Bertogne",
+    "cp": "6687",
+    "distance": 57.0
+  },
+  {
+    "nom": "Bertrix",
+    "cp": "6880",
+    "distance": 94.5
+  },
+  {
+    "nom": "Beyne-Heusay",
+    "cp": "4610",
+    "distance": 22.8
+  },
+  {
+    "nom": "Blegny",
+    "cp": "4670",
+    "distance": 30.7
+  },
+  {
+    "nom": "Blegny",
+    "cp": "4671",
+    "distance": 28.3
+  },
+  {
+    "nom": "Blegny",
+    "cp": "4672",
+    "distance": 31.4
+  },
+  {
+    "nom": "Bouillon",
+    "cp": "6831",
+    "distance": 30.7
+  },
+  {
+    "nom": "Bouillon",
+    "cp": "6836",
+    "distance": 96.7
+  },
+  {
+    "nom": "Bouillon",
+    "cp": "6832",
+    "distance": 96.0
+  },
+  {
+    "nom": "Bouillon",
+    "cp": "6833",
+    "distance": 96.0
+  },
+  {
+    "nom": "Bouillon",
+    "cp": "6830",
+    "distance": 99.3
+  },
+  {
+    "nom": "Bouillon",
+    "cp": "6838",
+    "distance": 101.1
+  },
+  {
+    "nom": "Bouillon",
+    "cp": "6834",
+    "distance": 38.9
+  },
+  {
+    "nom": "Braives",
+    "cp": "4260",
+    "distance": 43.8
+  },
+  {
+    "nom": "Braives",
+    "cp": "4263",
+    "distance": 46.3
+  },
+  {
+    "nom": "Braives",
+    "cp": "4261",
+    "distance": 46.6
+  },
+  {
+    "nom": "Bullange",
+    "cp": "4761",
+    "distance": 57.0
+  },
+  {
+    "nom": "Bullange",
+    "cp": "4760",
+    "distance": 62.9
+  },
+  {
+    "nom": "Burdinne",
+    "cp": "4210",
+    "distance": 46.4
+  },
+  {
+    "nom": "Burg-Reuland",
+    "cp": "4790",
+    "distance": 60.0
+  },
+  {
+    "nom": "Burg-Reuland",
+    "cp": "4791",
+    "distance": 54.1
+  },
+  {
+    "nom": "Butgenbach",
+    "cp": "4750",
+    "distance": 51.0
+  },
+  {
+    "nom": "Chaudfontaine",
+    "cp": "4052",
+    "distance": 15.8
+  },
+  {
+    "nom": "Chaudfontaine",
+    "cp": "4053",
+    "distance": 19.4
+  },
+  {
+    "nom": "Chaudfontaine",
+    "cp": "4050",
+    "distance": 18.7
+  },
+  {
+    "nom": "Chaudfontaine",
+    "cp": "4051",
+    "distance": 20.6
+  },
+  {
+    "nom": "Chiny",
+    "cp": "6810",
+    "distance": 101.6
+  },
+  {
+    "nom": "Chiny",
+    "cp": "6811",
+    "distance": 100.7
+  },
+  {
+    "nom": "Chiny",
+    "cp": "6812",
+    "distance": 94.6
+  },
+  {
+    "nom": "Chiny",
+    "cp": "6813",
+    "distance": 99.9
+  },
+  {
+    "nom": "Clavier",
+    "cp": "4560",
+    "distance": 36.6
+  },
+  {
+    "nom": "Comblain-au-Pont",
+    "cp": "4170",
+    "distance": 16.1
+  },
+  {
+    "nom": "Comblain-au-Pont",
+    "cp": "4171",
+    "distance": 14.5
+  },
+  {
+    "nom": "Crisnée",
+    "cp": "4367",
+    "distance": 39.2
+  },
+  {
+    "nom": "Dalhem",
+    "cp": "4606",
+    "distance": 32.3
+  },
+  {
+    "nom": "Dalhem",
+    "cp": "4607",
+    "distance": 34.1
+  },
+  {
+    "nom": "Dalhem",
+    "cp": "4608",
+    "distance": 36.9
+  },
+  {
+    "nom": "Daverdisse",
+    "cp": "6929",
+    "distance": 81.8
+  },
+  {
+    "nom": "Dison",
+    "cp": "4821",
+    "distance": 28.8
+  },
+  {
+    "nom": "Dison",
+    "cp": "4820",
+    "distance": 28.8
+  },
+  {
+    "nom": "Donceel",
+    "cp": "4357",
+    "distance": 39.2
+  },
+  {
+    "nom": "Durbuy",
+    "cp": "6941",
+    "distance": 26.8
+  },
+  {
+    "nom": "Durbuy",
+    "cp": "6940",
+    "distance": 33.0
+  },
+  {
+    "nom": "Engis",
+    "cp": "4480",
+    "distance": 29.3
+  },
+  {
+    "nom": "Esneux",
+    "cp": "4130",
+    "distance": 17.1
+  },
+  {
+    "nom": "Eupen",
+    "cp": "4701",
+    "distance": 42.2
+  },
+  {
+    "nom": "Eupen",
+    "cp": "4700",
+    "distance": 40.5
+  },
+  {
+    "nom": "Faimes",
+    "cp": "4317",
+    "distance": 43.7
+  },
+  {
+    "nom": "Fauvillers",
+    "cp": "6637",
+    "distance": 76.8
+  },
+  {
+    "nom": "Ferrières",
+    "cp": "4190",
+    "distance": 17.6
+  },
+  {
+    "nom": "Fexhe-le-Haut-Clocher",
+    "cp": "4347",
+    "distance": 35.7
+  },
+  {
+    "nom": "Florenville",
+    "cp": "6823",
+    "distance": 111.3
+  },
+  {
+    "nom": "Florenville",
+    "cp": "6821",
+    "distance": 100.9
+  },
+  {
+    "nom": "Florenville",
+    "cp": "6824",
+    "distance": 103.0
+  },
+  {
+    "nom": "Florenville",
+    "cp": "6820",
+    "distance": 103.9
+  },
+  {
+    "nom": "Flémalle",
+    "cp": "4400",
+    "distance": 27.6
+  },
+  {
+    "nom": "Fléron",
+    "cp": "4620",
+    "distance": 22.5
+  },
+  {
+    "nom": "Fléron",
+    "cp": "4621",
+    "distance": 24.2
+  },
+  {
+    "nom": "Fléron",
+    "cp": "4623",
+    "distance": 21.0
+  },
+  {
+    "nom": "Fléron",
+    "cp": "4624",
+    "distance": 21.2
+  },
+  {
+    "nom": "Geer",
+    "cp": "4250",
+    "distance": 48.5
+  },
+  {
+    "nom": "Geer",
+    "cp": "4253",
+    "distance": 46.9
+  },
+  {
+    "nom": "Geer",
+    "cp": "4252",
+    "distance": 45.8
+  },
+  {
+    "nom": "Geer",
+    "cp": "4254",
+    "distance": 47.0
+  },
+  {
+    "nom": "Gouvy",
+    "cp": "6674",
+    "distance": 47.8
+  },
+  {
+    "nom": "Gouvy",
+    "cp": "6672",
+    "distance": 50.4
+  },
+  {
+    "nom": "Gouvy",
+    "cp": "6671",
+    "distance": 46.8
+  },
+  {
+    "nom": "Gouvy",
+    "cp": "6673",
+    "distance": 49.4
+  },
+  {
+    "nom": "Gouvy",
+    "cp": "6670",
+    "distance": 51.4
+  },
+  {
+    "nom": "Grâce-Hollogne",
+    "cp": "4460",
+    "distance": 31.8
+  },
+  {
+    "nom": "Habay",
+    "cp": "6723",
+    "distance": 97.2
+  },
+  {
+    "nom": "Habay",
+    "cp": "6720",
+    "distance": 95.8
+  },
+  {
+    "nom": "Habay",
+    "cp": "6724",
+    "distance": 97.7
+  },
+  {
+    "nom": "Habay",
+    "cp": "6721",
+    "distance": 91.7
+  },
+  {
+    "nom": "Hamoir",
+    "cp": "4180",
+    "distance": 17.9
+  },
+  {
+    "nom": "Hamoir",
+    "cp": "4181",
+    "distance": 20.5
+  },
+  {
+    "nom": "Hannut",
+    "cp": "4280",
+    "distance": 58.0
+  },
+  {
+    "nom": "Herbeumont",
+    "cp": "6887",
+    "distance": 90.1
+  },
+  {
+    "nom": "Herstal",
+    "cp": "4040",
+    "distance": 28.2
+  },
+  {
+    "nom": "Herstal",
+    "cp": "4041",
+    "distance": 30.8
+  },
+  {
+    "nom": "Herstal",
+    "cp": "4042",
+    "distance": 31.6
+  },
+  {
+    "nom": "Herve",
+    "cp": "4650",
+    "distance": 26.1
+  },
+  {
+    "nom": "Herve",
+    "cp": "4653",
+    "distance": 29.0
+  },
+  {
+    "nom": "Herve",
+    "cp": "4651",
+    "distance": 29.9
+  },
+  {
+    "nom": "Herve",
+    "cp": "4652",
+    "distance": 24.0
+  },
+  {
+    "nom": "Herve",
+    "cp": "4654",
+    "distance": 31.2
+  },
+  {
+    "nom": "Hotton",
+    "cp": "6990",
+    "distance": 40.3
+  },
+  {
+    "nom": "Houffalize",
+    "cp": "6661",
+    "distance": 20.6
+  },
+  {
+    "nom": "Houffalize",
+    "cp": "6660",
+    "distance": 48.5
+  },
+  {
+    "nom": "Houffalize",
+    "cp": "6662",
+    "distance": 56.3
+  },
+  {
+    "nom": "Houffalize",
+    "cp": "6663",
+    "distance": 55.8
+  },
+  {
+    "nom": "Houffalize",
+    "cp": "6666",
+    "distance": 48.2
+  },
+  {
+    "nom": "Huy",
+    "cp": "4500",
+    "distance": 39.1
+  },
+  {
+    "nom": "Héron",
+    "cp": "4217",
+    "distance": 51.3
+  },
+  {
+    "nom": "Héron",
+    "cp": "4218",
+    "distance": 46.5
+  },
+  {
+    "nom": "Jalhay",
+    "cp": "4845",
+    "distance": 30.3
+  },
+  {
+    "nom": "Juprelle",
+    "cp": "4452",
+    "distance": 36.5
+  },
+  {
+    "nom": "Juprelle",
+    "cp": "4450",
+    "distance": 34.2
+  },
+  {
+    "nom": "Juprelle",
+    "cp": "4458",
+    "distance": 34.5
+  },
+  {
+    "nom": "Juprelle",
+    "cp": "4451",
+    "distance": 31.2
+  },
+  {
+    "nom": "Juprelle",
+    "cp": "4453",
+    "distance": 33.7
+  },
+  {
+    "nom": "Juseret",
+    "cp": "6642",
+    "distance": 80.0
+  },
+  {
+    "nom": "La Calamine",
+    "cp": "4728",
+    "distance": 45.3
+  },
+  {
+    "nom": "La Calamine",
+    "cp": "4720",
+    "distance": 44.8
+  },
+  {
+    "nom": "La Calamine",
+    "cp": "4721",
+    "distance": 45.7
+  },
+  {
+    "nom": "La Roche-en-Ardenne",
+    "cp": "6986",
+    "distance": 48.6
+  },
+  {
+    "nom": "La Roche-en-Ardenne",
+    "cp": "6983",
+    "distance": 52.5
+  },
+  {
+    "nom": "La Roche-en-Ardenne",
+    "cp": "6980",
+    "distance": 46.4
+  },
+  {
+    "nom": "La Roche-en-Ardenne",
+    "cp": "6982",
+    "distance": 43.1
+  },
+  {
+    "nom": "La Roche-en-Ardenne",
+    "cp": "6984",
+    "distance": 49.9
+  },
+  {
+    "nom": "Libin",
+    "cp": "6890",
+    "distance": 75.4
+  },
+  {
+    "nom": "Libramont-Chevigny",
+    "cp": "6800",
+    "distance": 79.3
+  },
+  {
+    "nom": "Lierneux",
+    "cp": "4990",
+    "distance": 36.5
+  },
+  {
+    "nom": "Limbourg",
+    "cp": "4831",
+    "distance": 33.3
+  },
+  {
+    "nom": "Limbourg",
+    "cp": "4834",
+    "distance": 34.6
+  },
+  {
+    "nom": "Limbourg",
+    "cp": "4830",
+    "distance": 33.8
+  },
+  {
+    "nom": "Lincent",
+    "cp": "4287",
+    "distance": 61.2
+  },
+  {
+    "nom": "Liège",
+    "cp": "4020",
+    "distance": 25.2
+  },
+  {
+    "nom": "Liège",
+    "cp": "4000",
+    "distance": 30.3
+  },
+  {
+    "nom": "Liège",
+    "cp": "4032",
+    "distance": 21.8
+  },
+  {
+    "nom": "Liège",
+    "cp": "4031",
+    "distance": 22.4
+  },
+  {
+    "nom": "Liège",
+    "cp": "4030",
+    "distance": 23.2
+  },
+  {
+    "nom": "Lontzen",
+    "cp": "4711",
+    "distance": 43.9
+  },
+  {
+    "nom": "Lontzen",
+    "cp": "4710",
+    "distance": 42.0
+  },
+  {
+    "nom": "Léglise",
+    "cp": "6860",
+    "distance": 82.1
+  },
+  {
+    "nom": "Malmedy",
+    "cp": "4960",
+    "distance": 38.4
+  },
+  {
+    "nom": "Manhay",
+    "cp": "6960",
+    "distance": 37.9
+  },
+  {
+    "nom": "Marche-en-Famenne",
+    "cp": "6900",
+    "distance": 48.1
+  },
+  {
+    "nom": "Marchin",
+    "cp": "4570",
+    "distance": 37.6
+  },
+  {
+    "nom": "Martelange",
+    "cp": "6630",
+    "distance": 85.4
+  },
+  {
+    "nom": "Meix-devant-Virton",
+    "cp": "6769",
+    "distance": 111.8
+  },
+  {
+    "nom": "Messancy",
+    "cp": "6780",
+    "distance": 107.8
+  },
+  {
+    "nom": "Messancy",
+    "cp": "6781",
+    "distance": 110.9
+  },
+  {
+    "nom": "Messancy",
+    "cp": "6782",
+    "distance": 109.4
+  },
+  {
+    "nom": "Modave",
+    "cp": "4577",
+    "distance": 35.5
+  },
+  {
+    "nom": "Musson",
+    "cp": "6750",
+    "distance": 115.6
+  },
+  {
+    "nom": "Nandrin",
+    "cp": "4550",
+    "distance": 29.5
+  },
+  {
+    "nom": "Nassogne",
+    "cp": "6953",
+    "distance": 61.1
+  },
+  {
+    "nom": "Nassogne",
+    "cp": "6950",
+    "distance": 57.1
+  },
+  {
+    "nom": "Nassogne",
+    "cp": "6952",
+    "distance": 53.3
+  },
+  {
+    "nom": "Nassogne",
+    "cp": "6951",
+    "distance": 51.2
+  },
+  {
+    "nom": "Neufchâteau",
+    "cp": "6840",
+    "distance": 84.7
+  },
+  {
+    "nom": "Neupré",
+    "cp": "4121",
+    "distance": 24.7
+  },
+  {
+    "nom": "Neupré",
+    "cp": "4122",
+    "distance": 19.8
+  },
+  {
+    "nom": "Neupré",
+    "cp": "4120",
+    "distance": 22.1
+  },
+  {
+    "nom": "Olne",
+    "cp": "4870",
+    "distance": 17.9
+  },
+  {
+    "nom": "Olne",
+    "cp": "4877",
+    "distance": 21.7
+  },
+  {
+    "nom": "Oreye",
+    "cp": "4360",
+    "distance": 41.6
+  },
+  {
+    "nom": "Ouffet",
+    "cp": "4590",
+    "distance": 26.8
+  },
+  {
+    "nom": "Oupeye",
+    "cp": "4680",
+    "distance": 32.5
+  },
+  {
+    "nom": "Oupeye",
+    "cp": "4682",
+    "distance": 35.1
+  },
+  {
+    "nom": "Oupeye",
+    "cp": "4684",
+    "distance": 35.3
+  },
+  {
+    "nom": "Oupeye",
+    "cp": "4683",
+    "distance": 31.3
+  },
+  {
+    "nom": "Oupeye",
+    "cp": "4681",
+    "distance": 32.8
+  },
+  {
+    "nom": "Paliseul",
+    "cp": "6852",
+    "distance": 78.7
+  },
+  {
+    "nom": "Paliseul",
+    "cp": "6850",
+    "distance": 86.3
+  },
+  {
+    "nom": "Paliseul",
+    "cp": "6851",
+    "distance": 89.9
+  },
+  {
+    "nom": "Paliseul",
+    "cp": "6853",
+    "distance": 84.0
+  },
+  {
+    "nom": "Paliseul",
+    "cp": "6856",
+    "distance": 89.2
+  },
+  {
+    "nom": "Pepinster",
+    "cp": "4860",
+    "distance": 24.5
+  },
+  {
+    "nom": "Pepinster",
+    "cp": "4861",
+    "distance": 23.9
+  },
+  {
+    "nom": "Plombières",
+    "cp": "4851",
+    "distance": 43.9
+  },
+  {
+    "nom": "Plombières",
+    "cp": "4852",
+    "distance": 40.9
+  },
+  {
+    "nom": "Plombières",
+    "cp": "4850",
+    "distance": 41.5
+  },
+  {
+    "nom": "Raeren",
+    "cp": "4730",
+    "distance": 47.8
+  },
+  {
+    "nom": "Raeren",
+    "cp": "4731",
+    "distance": 47.1
+  },
+  {
+    "nom": "Remicourt",
+    "cp": "4350",
+    "distance": 40.0
+  },
+  {
+    "nom": "Remicourt",
+    "cp": "4351",
+    "distance": 40.1
+  },
+  {
+    "nom": "Rendeux",
+    "cp": "6987",
+    "distance": 43.6
+  },
+  {
+    "nom": "Rouvroy",
+    "cp": "6767",
+    "distance": 116.3
+  },
+  {
+    "nom": "Saint-Georges-sur-Meuse",
+    "cp": "4470",
+    "distance": 32.9
+  },
+  {
+    "nom": "Saint-Hubert",
+    "cp": "6870",
+    "distance": 67.7
+  },
+  {
+    "nom": "Saint-Léger",
+    "cp": "6747",
+    "distance": 109.3
+  },
+  {
+    "nom": "Saint-Nicolas",
+    "cp": "4420",
+    "distance": 25.1
+  },
+  {
+    "nom": "Saint-Vith",
+    "cp": "4783",
+    "distance": 57.3
+  },
+  {
+    "nom": "Saint-Vith",
+    "cp": "4784",
+    "distance": 50.6
+  },
+  {
+    "nom": "Saint-Vith",
+    "cp": "4780",
+    "distance": 52.3
+  },
+  {
+    "nom": "Saint-Vith",
+    "cp": "4782",
+    "distance": 60.0
+  },
+  {
+    "nom": "Sainte-Ode",
+    "cp": "6681",
+    "distance": 61.4
+  },
+  {
+    "nom": "Sainte-Ode",
+    "cp": "6680",
+    "distance": 63.0
+  },
+  {
+    "nom": "Seraing",
+    "cp": "4100",
+    "distance": 24.0
+  },
+  {
+    "nom": "Seraing",
+    "cp": "4101",
+    "distance": 25.8
+  },
+  {
+    "nom": "Seraing",
+    "cp": "4102",
+    "distance": 22.8
+  },
+  {
+    "nom": "Soumagne",
+    "cp": "4630",
+    "distance": 26.4
+  },
+  {
+    "nom": "Soumagne",
+    "cp": "4632",
+    "distance": 27.0
+  },
+  {
+    "nom": "Soumagne",
+    "cp": "4631",
+    "distance": 25.6
+  },
+  {
+    "nom": "Soumagne",
+    "cp": "4633",
+    "distance": 26.8
+  },
+  {
+    "nom": "Spa",
+    "cp": "4900",
+    "distance": 25.4
+  },
+  {
+    "nom": "Sprimont",
+    "cp": "4140",
+    "distance": 10.0
+  },
+  {
+    "nom": "Sprimont",
+    "cp": "4141",
+    "distance": 15.4
+  },
+  {
+    "nom": "Stavelot",
+    "cp": "4970",
+    "distance": 32.5
+  },
+  {
+    "nom": "Stoumont",
+    "cp": "4987",
+    "distance": 27.5
+  },
+  {
+    "nom": "Tellin",
+    "cp": "6927",
+    "distance": 66.3
+  },
+  {
+    "nom": "Tenneville",
+    "cp": "6970",
+    "distance": 57.0
+  },
+  {
+    "nom": "Tenneville",
+    "cp": "6972",
+    "distance": 54.2
+  },
+  {
+    "nom": "Tenneville",
+    "cp": "6971",
+    "distance": 55.5
+  },
+  {
+    "nom": "Theux",
+    "cp": "4910",
+    "distance": 22.4
+  },
+  {
+    "nom": "Thimister-Clermont",
+    "cp": "4890",
+    "distance": 33.8
+  },
+  {
+    "nom": "Tinlot",
+    "cp": "4557",
+    "distance": 28.0
+  },
+  {
+    "nom": "Tintigny",
+    "cp": "6730",
+    "distance": 98.4
+  },
+  {
+    "nom": "Trois-Ponts",
+    "cp": "4983",
+    "distance": 30.9
+  },
+  {
+    "nom": "Trois-Ponts",
+    "cp": "4980",
+    "distance": 35.7
+  },
+  {
+    "nom": "Vaux-sur-Sûre",
+    "cp": "6640",
+    "distance": 69.9
+  },
+  {
+    "nom": "Verlaine",
+    "cp": "4537",
+    "distance": 37.7
+  },
+  {
+    "nom": "Verviers",
+    "cp": "4800",
+    "distance": 26.2
+  },
+  {
+    "nom": "Verviers",
+    "cp": "4802",
+    "distance": 27.5
+  },
+  {
+    "nom": "Verviers",
+    "cp": "4801",
+    "distance": 30.0
+  },
+  {
+    "nom": "Vielsalm",
+    "cp": "6690",
+    "distance": 40.9
+  },
+  {
+    "nom": "Vielsalm",
+    "cp": "6698",
+    "distance": 37.3
+  },
+  {
+    "nom": "Vielsalm",
+    "cp": "6692",
+    "distance": 41.7
+  },
+  {
+    "nom": "Villers-le-Bouillet",
+    "cp": "4530",
+    "distance": 43.5
+  },
+  {
+    "nom": "Virton",
+    "cp": "6760",
+    "distance": 114.4
+  },
+  {
+    "nom": "Virton",
+    "cp": "6762",
+    "distance": 115.8
+  },
+  {
+    "nom": "Virton",
+    "cp": "6761",
+    "distance": 115.6
+  },
+  {
+    "nom": "Visé",
+    "cp": "4602",
+    "distance": 29.7
+  },
+  {
+    "nom": "Visé",
+    "cp": "4600",
+    "distance": 37.7
+  },
+  {
+    "nom": "Visé",
+    "cp": "4601",
+    "distance": 31.2
+  },
+  {
+    "nom": "Waimes",
+    "cp": "4950",
+    "distance": 46.7
+  },
+  {
+    "nom": "Wanze",
+    "cp": "4520",
+    "distance": 44.7
+  },
+  {
+    "nom": "Waremme",
+    "cp": "4300",
+    "distance": 44.9
+  },
+  {
+    "nom": "Wasseiges",
+    "cp": "4219",
+    "distance": 57.0
+  },
+  {
+    "nom": "Welkenraedt",
+    "cp": "4840",
+    "distance": 38.8
+  },
+  {
+    "nom": "Welkenraedt",
+    "cp": "4841",
+    "distance": 37.6
+  },
+  {
+    "nom": "Wellin",
+    "cp": "6921",
+    "distance": 69.0
+  },
+  {
+    "nom": "Wellin",
+    "cp": "6920",
+    "distance": 70.5
+  },
+  {
+    "nom": "Wellin",
+    "cp": "6922",
+    "distance": 70.1
+  },
+  {
+    "nom": "Wellin",
+    "cp": "6924",
+    "distance": 72.0
+  },
+  {
+    "nom": "Érezée",
+    "cp": "6997",
+    "distance": 50.4
+  },
+  {
+    "nom": "Étalle",
+    "cp": "6740",
+    "distance": 100.0
+  },
+  {
+    "nom": "Étalle",
+    "cp": "6743",
+    "distance": 105.6
+  },
+  {
+    "nom": "Étalle",
+    "cp": "6741",
+    "distance": 103.0
+  },
+  {
+    "nom": "Étalle",
+    "cp": "6742",
+    "distance": 104.9
+  }
+]
