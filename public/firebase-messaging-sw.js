@@ -10,7 +10,8 @@ importScripts("https://www.gstatic.com/firebasejs/11.0.1/firebase-messaging-comp
 firebase.initializeApp({
   apiKey: "AIzaSyC5Rly--5aw3vSEuhRcyZxzD5fg1JJowbE",
   authDomain: "lift-agenda-app.firebaseapp.com",
-  databaseURL: "https://lift-agenda-app-default-rtdb.europe-west1.firebasedatabase.app",
+  databaseURL:"https://liftagenda-default-rtdb.europe-west1.firebasedatabase.app",
+
   projectId: "lift-agenda-app",
   storageBucket: "lift-agenda-app.firebasestorage.app",
   messagingSenderId: "162981688841",

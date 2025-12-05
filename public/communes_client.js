@@ -1,49 +1,79 @@
-/* Chargement du fichier communes_client.json */
-export async function loadCommunes() {
-  const res = await fetch("./communes_client.json");
-  return await res.json();
+// communes_client.js
+// Charge communes_client.json et fournit : window.communes + autocomplete CP/commune
+
+window.communes = [];
+
+async function loadCommunes() {
+  try {
+    const res = await fetch("../communes_client.json");
+    const data = await res.json();
+    window.communes = data;
+    console.log("📌 Communes chargées :", communes.length);
+    initAutocompleteCP();
+  } catch (e) {
+    console.error("Erreur chargement communes_client.json :", e);
+  }
 }
 
-/* Autocomplete CP + Commune */
-export function initAutocomplete(cpField, communeField, suggestionBox) {
-  let data = [];
+function initAutocompleteCP() {
+  const cpInput       = document.getElementById("cp");
+  const communeInput  = document.getElementById("commune");
+  const suggestionsEl = document.getElementById("suggestions-cp");
 
-  loadCommunes().then(list => { data = list; });
+  if (!cpInput || !communeInput || !suggestionsEl) return;
 
-  cpField.addEventListener("input", () => {
-    const val = cpField.value.trim();
+  cpInput.addEventListener("input", () => {
+    const val = cpInput.value.trim();
+    suggestionsEl.innerHTML = "";
+
     if (val.length < 2) {
-      suggestionBox.classList.add("hidden");
+      suggestionsEl.classList.add("hidden");
       return;
     }
 
-    const filtered = data
-      .filter(x =>
-        String(x.cp).startsWith(val) ||
-        x.nom.toLowerCase().includes(val.toLowerCase())
+    const list = communes
+      .filter(c =>
+        String(c.cp).startsWith(val) ||
+        (c.nom && c.nom.toLowerCase().includes(val.toLowerCase()))
       )
       .slice(0, 20);
 
-    suggestionBox.innerHTML = "";
+    if (!list.length) {
+      suggestionsEl.classList.add("hidden");
+      return;
+    }
 
-    filtered.forEach(item => {
+    list.forEach(c => {
       const div = document.createElement("div");
       div.className = "suggestion-item";
-      div.textContent = `${item.cp} – ${item.nom}`;
+      div.textContent = `${c.cp} – ${c.nom}`;
       div.onclick = () => {
-        cpField.value = item.cp;
-        communeField.value = item.nom;
-        suggestionBox.classList.add("hidden");
+        cpInput.value      = c.cp;
+        communeInput.value = c.nom;
+        suggestionsEl.classList.add("hidden");
+        suggestionsEl.innerHTML = "";
+
+        // Si ta fonction existe (depuis ton script inline), on recalcule le prix et les créneaux
+        if (typeof window.calculerPrixOneShot === "function") {
+          window.calculerPrixOneShot();
+        }
+        if (typeof window.afficherCreneauxOneShot === "function") {
+          window.afficherCreneauxOneShot();
+        }
       };
-      suggestionBox.appendChild(div);
+      suggestionsEl.appendChild(div);
     });
 
-    suggestionBox.classList.remove("hidden");
+    suggestionsEl.classList.remove("hidden");
   });
 
   document.addEventListener("click", e => {
-    if (!suggestionBox.contains(e.target) && e.target !== cpField) {
-      suggestionBox.classList.add("hidden");
+    if (!suggestionsEl.contains(e.target) && e.target !== cpInput) {
+      suggestionsEl.classList.add("hidden");
     }
   });
 }
+
+// lancer le chargement au démarrage
+document.addEventListener("DOMContentLoaded", loadCommunes);
+

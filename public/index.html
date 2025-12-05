@@ -2378,7 +2378,11 @@ document.querySelectorAll('#adminLFT .admin-somme').forEach(inp => {
   const totalFinal = ttc - totalAcomptes;   // on retire les acomptes
 
   const expTxt =
-    `🔴 Brut: ${brut.toFixed(2)} € — ` +
+   `💼 CA: ${
+   [...document.querySelectorAll("#adminEXP .admin-somme")]
+    .reduce((sum, inp) => sum + (parseFloat(inp.value) || 0), 0)
+    .toFixed(2)
+   } € — ` +
     `Net(70%): ${totalNet.toFixed(2)} € — ` +
     `TVA21%: ${tva.toFixed(2)} € — ` +
     `TTC: ${ttc.toFixed(2)} € — 💎 ` +
@@ -2386,6 +2390,49 @@ document.querySelectorAll('#adminLFT .admin-somme').forEach(inp => {
     `🔷 Total à facturer: ${totalFinal.toFixed(2)} €`;
 
   document.getElementById("totalEXP").textContent = expTxt;
+ // ====== + Calcul séparé : Total à facturer SANS les VF ======
+let totalSansVF = 0;
+let totalAcomptesSansVF = 0;
+
+document.querySelectorAll("#adminEXP tr").forEach(tr => {
+  const inp = tr.querySelector(".admin-somme");
+  if (!inp) return;
+
+  const val = parseFloat(inp.value) || 0;
+  
+  const vfCell = tr.querySelector('td:nth-child(6)');
+  const isVF = vfCell && vfCell.textContent.includes('✔️');
+
+  const isVP = inp.style.color === "red";
+
+  if (!isVF) {
+    if (isVP) totalAcomptesSansVF += val;
+    else totalSansVF += val;
+  }
+});
+
+const tvaSansVF = totalSansVF * 0.21;
+const totalAFacturerSansVF = totalSansVF + tvaSansVF - totalAcomptesSansVF;
+
+// ===== Affichage minimal =====
+const secondTxt =
+  `HorsVF:${totalSansVF.toFixed(2)} € ` +
+  `TVA:${tvaSansVF.toFixed(2)} € ` +
+  `Acc:-${totalAcomptesSansVF.toFixed(2)} € ` +
+  `A facturer:${totalAFacturerSansVF.toFixed(2)} €`;
+
+// Met à jour la ligne ou la créé si pas là
+let lbl = document.getElementById("expSecondLine");
+if (!lbl) {
+  lbl = document.createElement("div");
+  lbl.id = "expSecondLine";
+  lbl.style.textAlign = "right";
+  lbl.style.fontSize = "13px";
+  lbl.style.marginTop = "4px";
+  document.getElementById("totalEXP").appendChild(lbl);
+}
+lbl.textContent = secondTxt;
+
 
   // ----- Totaux #LIFT (inchangé) -----
   let totalLftRouge = 0, totalLftNoir = 0;
@@ -3606,6 +3653,8 @@ function imprimerDevis() {
   window.print();
 }
 </script>
+
+<a href="/public/client/one_shot.html">Accès clients</a>
 
 
 

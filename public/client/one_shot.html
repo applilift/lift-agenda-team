@@ -1,139 +1,163 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Réservation One Shot</title>
-<link rel="stylesheet" href="../styles.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Réservation One Shot</title>
+  <link rel="stylesheet" href="../css/theme_client.css" />
 </head>
 
 <body>
+  <div class="page-container">
+    <h1>Réservation One Shot</h1>
 
-<h2>One Shot (tarif fixe + distance)</h2>
+    <form id="form-one-shot" novalidate>
 
-<form id="form-one-shot">
+      <!-- DATE -->
+      <label>Date :</label>
+      <input type="date" id="date" required />
 
-    <!-- DATE -->
-    <label>Date :</label>
-    <input type="date" id="date" required>
+      <!-- CODE POSTAL -->
+      <label>Code postal :</label>
+      <div class="field-with-suggestions">
+        <input type="text" id="cp" maxlength="5" required />
+        <div id="suggestions-cp" class="suggestion-box hidden"></div>
+      </div>
 
-    <!-- CODE POSTAL -->
-    <label>Code postal :</label>
-    <input type="text" id="cp" required>
-    <div id="suggestions-cp" class="hidden"></div>
+      <!-- COMMUNE -->
+      <label>Commune :</label>
+      <input type="text" id="commune" required />
 
-    <!-- COMMUNE -->
-    <label>Commune :</label>
-    <input type="text" id="commune" required>
+      <!-- 30 MIN EN PLUS (comme sur mission double) -->
+      <label>Ajouter 30 min ?</label>
+      <input type="checkbox" id="extra30" />
 
-    <!-- CRÉNEAUX -->
-    <div id="wrapper-creneaux" class="hidden">
-        <h3>Créneaux disponibles</h3>
-        <div id="creneaux-optimises"></div>
-        <div id="creneaux-libres"></div>
-    </div>
+      <hr />
+      <h2>Créneaux</h2>
 
-    <h3>Total : <span id="prix-total">0 €</span></h3>
+      <!-- WRAPPER CRÉNEAUX (ton slot.js se charge d'afficher les créneaux dedans) -->
+      <div id="slots-wrapper" class="slots-wrapper hidden">
+        <div id="slots"></div>
+        <p id="slot-msg" class="message-date hidden"></p>
+      </div>
+      <input type="hidden" id="slot" />
 
-    <button type="button" id="btn-payer">Payer</button>
-</form>
+      <hr />
+      <p><strong>Total :</strong> <span id="total">85,00 €</span></p>
 
-<!-- STRIPE -->
-<script src="https://js.stripe.com/v3/"></script>
+      <button type="button" id="pay">Payer</button>
+    </form>
+  </div>
 
-<!-- TES SCRIPTS -->
-<script src="../communes_client.js"></script>
-<script src="../slot.js"></script>
+  <!-- STRIPE -->
+  <script src="https://js.stripe.com/v3/"></script>
 
-<script>
+  <!-- TES SCRIPTS (comme sur la mission double) -->
+  <script src="../communes_client.js"></script>
+  <script type="module" src="../js/firebase_client.js"></script>
+  <script src="./js/slot.js"></script>
 
-// =====================================================
-// CALCUL PRIX ONE SHOT
-// =====================================================
+  <script>
+    // =====================================================
+    // CONFIG TARIFS ONE SHOT
+    // =====================================================
 
-function calculerPrixOneShot() {
+    const PRIX_BASE_ONE_SHOT = 85;   // prix de base (30 min de mission) -> ajuste si besoin
+    const PRIX_EXTRA_30      = 15;   // supplément pour +30 min         -> ajuste si besoin
+    const PRIX_KM            = 0.5;  // prix au km (comme la mission double)
 
-    let prixBase = 85;   // Prix fixe One Shot
-    let cp = document.getElementById("cp").value;
+    // =====================================================
+    // CALCUL PRIX ONE SHOT
+    // =====================================================
 
-    // distance via ton fichier communes_client.js
-    let commune = communes.find(c => String(c.cp) === String(cp));
-    let distance = commune ? commune.distance : 0;
+    function calculerPrixOneShot() {
+      // Base
+      let prixBase = PRIX_BASE_ONE_SHOT;
 
-    let prixDeplacement = distance * 0.5;
+      // Option 30 min en plus
+      const extra = document.getElementById("extra30").checked ? PRIX_EXTRA_30 : 0;
 
-    // bonus/malus optimisation
-    let optimisation = window.creneauOptimisation || 0;
+      // Distance via le tableau des communes
+      const cp = document.getElementById("cp").value;
+      let distance = 0;
 
-    let prixTotal = prixBase + prixDeplacement + optimisation;
+      if (typeof communes !== "undefined" && communes && cp) {
+        const commune = communes.find(c => String(c.cp) === String(cp));
+        distance = commune ? (commune.distance || 0) : 0;
+      }
 
-    document.getElementById("prix-total").textContent =
-        prixTotal.toFixed(2) + " €";
+      const prixDeplacement = distance * PRIX_KM;
 
-    return prixTotal;
-}
+      // Bonus/malus d'optimisation selon le créneau
+      const optimisation = window.creneauOptimisation || 0;
 
+      const prixTotal = prixBase + extra + prixDeplacement + optimisation;
 
-// =====================================================
-// QUAND L'USAGE CHOISIT UN CRÉNEAU
-// =====================================================
+      // Affichage
+      document.getElementById("total").textContent =
+        prixTotal.toFixed(2).replace(".", ",") + " €";
 
-window.onCreneauSelected = function (bonus) {
-    window.creneauOptimisation = bonus;
-    calculerPrixOneShot();
-};
-
-// recalcul automatique
-document.getElementById("cp").oninput = calculerPrixOneShot;
-
-
-// =====================================================
-// BOUTON PAYER
-// =====================================================
-
-document.getElementById("btn-payer").addEventListener("click", () => {
-    const prixTotal = calculerPrixOneShot();
-    lancerPaiement(prixTotal, "One Shot");
-});
-
-
-// =====================================================
-// INTÉGRATION STRIPE
-// =====================================================
-
-async function lancerPaiement(prixTotal, description) {
-
-    if (!prixTotal || prixTotal <= 0) {
-        alert("Le prix n’a pas pu être calculé.");
-        return;
+      return prixTotal;
     }
 
-    try {
+    // =====================================================
+    // QUAND L'UTILISATEUR CHOISIT UN CRÉNEAU
+    // (slot.js doit appeler window.onCreneauSelected(bonus))
+    // =====================================================
+
+    window.onCreneauSelected = function (bonus) {
+      window.creneauOptimisation = bonus || 0;
+      calculerPrixOneShot();
+    };
+
+    // Recalcul quand CP ou extra 30 min change
+    document.getElementById("cp").addEventListener("input", calculerPrixOneShot);
+    document.getElementById("extra30").addEventListener("change", calculerPrixOneShot);
+
+    // =====================================================
+    // BOUTON PAYER
+    // =====================================================
+
+    document.getElementById("pay").addEventListener("click", () => {
+      const prixTotal = calculerPrixOneShot();
+      lancerPaiement(prixTotal, "Mission One Shot");
+    });
+
+    // =====================================================
+    // INTÉGRATION STRIPE (copiée/adaptée de mission double)
+    // =====================================================
+
+    async function lancerPaiement(prixTotal, description) {
+      if (!prixTotal || prixTotal <= 0) {
+        alert("Le prix n’a pas pu être calculé.");
+        return;
+      }
+
+      try {
         const response = await fetch("/.netlify/functions/create-checkout-session", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                amount: prixTotal,
-                description: description
-            })
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            amount: prixTotal,
+            description: description
+          })
         });
 
         const data = await response.json();
 
-        const stripe = Stripe("ppk_test_51SXNhuQBlPkBPQsBNpCjAXfbaeCd8pWKYy2qYiN0tUZQFMqkoRPydrtsI6PSLFjpecdYFp0zDKTMCQxeeVFGq1YX00kTjbvtsw");  // ← TA CLÉ PUBLIQUE STRIPE
+        const stripe = Stripe("pk_test_51SXNhuQBlPkBPQsBNpCjAXfbaeCd8pWKYy2qYiN0tUZQFMqkoRPydrtsI6PSLFjpecdYFp0zDKTMCQxeeVFGq1YX00kTjbvtsw");
 
         stripe.redirectToCheckout({ sessionId: data.sessionId });
-    }
-    catch (e) {
+      } catch (e) {
         console.error(e);
-        alert("Erreur lors du paiement.");
+        alert("Erreur lors du lancement du paiement.");
+      }
     }
-}
 
-</script>
+    // Appel initial pour afficher un total cohérent dès le début
+    calculerPrixOneShot();
+  </script>
 
 </body>
 </html>
-
-
 
