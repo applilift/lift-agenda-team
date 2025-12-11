@@ -747,14 +747,20 @@
 
   </style>
 
+
   <!-- ✅ Firebase SDK (exposé global) -->
   <script type="module">
+   // === Clé OpenRouteService (depuis Netlify) ===
+const ORS_API_KEY = window.NETLIFY_ENV?.ORS_API_KEY || "eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6IjIzMWFmY2M1YzhiOTQ4YjlhYWY1ZTE2YWQ5NDhkZWY5IiwiaCI6Im11cm11cjY0In0=";
+console.log("🔑 ORS_API_KEY chargée :", ORS_API_KEY);
+ 
   import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
 
   import {
     getDatabase,
     ref,
     push,
+    set,
     update,
     remove,
     onValue,
@@ -778,10 +784,13 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
     window.db = db;
+  
+   
 
     // Helpers globaux
     window.firebaseRef = ref;
     window.firebasePush = push;
+    window.firebaseSet = set;
     window.firebaseUpdate = update;
     window.firebaseRemove = remove;
     window.firebaseOnValue = onValue;
@@ -790,8 +799,14 @@
     window.firebaseStartAt = startAt;
     window.firebaseEndAt = endAt;
     window.firebaseGet = get;
+    
 
   </script>
+
+<script>
+  window.$ = s => document.querySelector(s);
+  window.$$ = s => document.querySelectorAll(s);
+</script>
 
  <!-- ✅ PWA Manifest -->
 <link rel="manifest" href="https://lift-agenda-team.netlify.app/manifest.json">
@@ -898,10 +913,15 @@ html {
 </style>
 
 
+<!-- Leaflet CSS & JS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
 </head>
 
 <body>
+  <div id="map" style="height: 150px; width: 100%;"></div>
+
   <!-- 🔹 En-tête simplifié avec bouton Calculateur -->
 <div class="header-top" style="
   display: flex;
@@ -1341,10 +1361,45 @@ html {
         </div>
 
         <!-- ADRESSE -->
-        <div class="fieldset" id="adresseBox" style="display:none">
-          <legend>Adresse</legend>
-          <input type="text" id="adresse" placeholder="Rue / CP / Ville">
-        </div>
+<div class="fieldset" id="adresseBox" style="display:none">
+  <legend>Adresse</legend>
+
+  <!-- Rue + numéro -->
+  <div class="row">
+    <div style="flex:2;min-width:180px">
+      <label class="small" for="rue">Rue</label>
+      <input type="text" id="rue" placeholder="Rue">
+    </div>
+    <div style="flex:1;min-width:80px">
+      <label class="small" for="numero">N°</label>
+      <input type="text" id="numero" placeholder="12">
+    </div>
+  </div>
+
+  <!-- Code postal + commune -->
+  <div class="row">
+    <div style="flex:1;min-width:120px">
+      <label class="small" for="cpIntern">Code postal</label>
+      <input type="text" id="cpIntern" maxlength="4" inputmode="numeric" placeholder="4000">
+    </div>
+    <div style="flex:2;min-width:180px">
+      <label class="small" for="communeIntern">Commune</label>
+      <input type="text" id="communeIntern" placeholder="LIÈGE">
+    </div>
+  </div>
+
+  <!-- Adresse complète générée (lecture seule) -->
+  <div class="row">
+    <div style="flex:1;min-width:260px">
+      <label class="small" for="adresseFull">Adresse complète (auto)</label>
+      <input type="text" id="adresseFull" readonly>
+    </div>
+  </div>
+
+  <!-- Champ caché pour compatibilité avec l'ancien code -->
+  <input type="hidden" id="adresse">
+</div>
+
 
         <!-- Actions -->
         <div class="row" style="justify-content:flex-end">
@@ -1611,33 +1666,109 @@ html {
   <div class="toast" id="toast"></div>
   <!-- ===== Script principal ===== -->
   <script type="module">
+    const ORS_API_KEY = "eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6IjIzMWFmY2M1YzhiOTQ4YjlhYWY1ZTE2YWQ5NDhkZWY5IiwiaCI6Im11cm11cjY0In0=";
+
 // Aliases Firebase exposés globalement depuis le <head>
-const db             = window.db;
-const ref            = window.firebaseRef;
-const push           = window.firebasePush;
-const update         = window.firebaseUpdate;
-const remove         = window.firebaseRemove;
-const onValue        = window.firebaseOnValue;
-const query          = window.firebaseQuery;
-const orderByChild   = window.firebaseOrderByChild;
-const startAt        = window.firebaseStartAt;
-const endAt          = window.firebaseEndAt;
-const get            = window.firebaseGet;
+const db = window.db;
+const ref = window.firebaseRef;
+const push = window.firebasePush;
+const update = window.firebaseUpdate;
+const remove = window.firebaseRemove;
+const set = window.firebaseSet;
+const onValue = window.firebaseOnValue;
+const query = window.firebaseQuery;
+const orderByChild = window.firebaseOrderByChild;
+const startAt = window.firebaseStartAt;
+const endAt = window.firebaseEndAt;
+const get = window.firebaseGet;
+
+// === Helpers DOM globaux ===
+    // Référence globale vers /reservations dans Firebase
+    const reservationsRef = ref(db, "reservations");
+    window.reservationsRef = reservationsRef;
+
+// === Helpers distance / optimisation ===
+
+// Haversine (km) entre 2 points {lat, lng}
+function distanceKm(a, b) {
+  if (!a || !b || a.lat == null || b.lat == null) return Infinity;
+  const R = 6371; // rayon Terre km
+  const toRad = deg => deg * Math.PI / 180;
+  const dLat = toRad(b.lat - a.lat);
+  const dLng = toRad(b.lng - a.lng);
+  const lat1 = toRad(a.lat);
+  const lat2 = toRad(b.lat);
+
+  const x = Math.sin(dLat / 2) ** 2 +
+            Math.cos(lat1) * Math.cos(lat2) *
+            Math.sin(dLng / 2) ** 2;
+  const c = 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1 - x));
+  return R * c;
+}
+
+// 🔁 Coordonnées du dépôt Sprimont (rue Mazeure 30)
+const SPRIMONT_BASE_ADDRESS = "RUE MAZEURE 30, SPRIMONT";
+let sprimontCoords = null;
+
+async function getSprimontCoords() {
+  if (sprimontCoords) return sprimontCoords;
+  // utilise déjà ta fonction ORS
+  sprimontCoords = await geocodeAdresse(SPRIMONT_BASE_ADDRESS);
+  return sprimontCoords;
+}
+
+// 💶 Calcule l'économie pour le client
+async function computeEconomyEuros(newCoords) {
+  const base = await getSprimontCoords();
+  if (!base) return null;
+  const dist = distanceKm(base, newCoords); // km
+  const euros = dist * 0.5;
+  return Number(euros.toFixed(2));
+}
+
+// 🔍 Cherche les missions < 10 km le même jour
+async function findNearbyMissions(date, newCoords) {
+  const q = query(
+    reservationsRef,
+    orderByChild("date"),
+    startAt(date),
+    endAt(date)
+  );
+  const snap = await get(q);
+  const all = snap.val() || {};
+
+  const arr = Object.entries(all)
+    .map(([id, r]) => ({ id, ...r }))
+    .filter(r => r.coords && r.coords.lat != null && r.coords.lng != null)
+    .map(r => ({
+      ...r,
+      distanceKm: distanceKm(newCoords, r.coords)
+    }))
+    .filter(r => r.distanceKm <= 10) // règle des 10 km
+    .sort((a, b) => a.distanceKm - b.distanceKm);
+
+  return arr;
+}
 
 
-  
+// Attendre que le DOM soit prêt avant d'utiliser $
+document.addEventListener("DOMContentLoaded", () => {
+let map = L.map("map").setView([50.64, 5.57], 12);
 
-    /* Utils */
-    const $ = s => document.querySelector(s), $$ = s => document.querySelectorAll(s);
-    const toast = $("#toast");
-    const toHM = v => (v || "").slice(0, 5);
-    const badge = t => ({ EXP: "bEXP", LFT: "bLFT", PER: "bPER", PAU: "bPAU" }[t] || "bLFT");
-    const showToast = (m, b = "#111827") => {
-      toast.textContent = m;
-      toast.style.background = b;
-      toast.classList.add("show");
-      setTimeout(() => toast.classList.remove("show"), 1800);
-    };
+L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+  attribution: "© OpenStreetMap",
+}).addTo(map);
+
+  /* Utils */
+  const toast = $("#toast");
+  const toHM = v => (v || "").slice(0, 5);
+  const badge = t => ({ EXP: "bEXP", LFT: "bLFT", PER: "bPER", PAU: "bPAU" }[t] || "bLFT");
+  const showToast = (m, b = "#11B27") => {
+    toast.textContent = m;
+    toast.style.background = b;
+    toast.classList.add("show");
+    setTimeout(() => toast.classList.remove("show"), 1800);
+  };
 
     /* Onglets */
     $$(".tab-btn").forEach(b => b.addEventListener("click", () => {
@@ -1797,8 +1928,6 @@ function getFacture() {
 
     const hasFacture = d => d && d.type;
 
-    /* Firebase paths */
-    const reservationsRef = ref(db, "reservations");
 
     /* CRUD */
     $("#btnSave").addEventListener("click", async () => {
@@ -1809,14 +1938,35 @@ function getFacture() {
         alert("Vérifie la date/heure");
         return;
       }
- const data = {
-  date, start, end,
+ // Vérification adresse obligatoire
+const adresseBrute = ($("#adresse").value || "").trim();
+if (
+  adresseBrute.length < 5 ||      // min 5 caractères
+  !/\d/.test(adresseBrute) ||     // doit contenir un numéro
+  !/\d{4}/.test(adresseBrute)     // doit contenir un CP belge
+) {
+  alert("Adresse obligatoire : Rue + Numéro + Code Postal !");
+  return;
+}
+
+// Construction des données à enregistrer
+const data = {
+  date,
+  start,
+  end,
   type: selectedType,
   client: selectedClient,
-  note: $("#note").value.trim(),
-  adresse: ($("#adresse").value || "").trim().toUpperCase(),
+  note: ($("#note").value || "").trim(),
+
+  // Adresse brute (comme avant, la logique de parsing viendra ensuite)
+  adresse: adresseBrute.toUpperCase(),
+ coords: await geocodeAdresse(adresseBrute),
+
+  // Pro / Particulier
   vf: $("#indVF").classList.contains("violet"),
   vp: $("#indVP").classList.contains("violet"),
+
+  // Facturation
   facture: getFacture(),
   aPayer: parseFloat($("#aPayer").value) || null,
 
@@ -1825,10 +1975,10 @@ function getFacture() {
     ? (parseFloat($("#prixLFT").value) || null)
     : null,
 
-  
-
   updatedAt: Date.now()
 };
+console.log("📍 Résultat ORS :", data.coords);
+
 /*  
 🔧 SOMME :
 - Création EXP → somme = 70% de aPayer
@@ -1854,19 +2004,73 @@ if (!editingId) {
       if (!data.client) {
         if (!confirm("Aucun choix PRO/PART sélectionné. Continuer ?")) return;
       }
-      if (editingId) {
-        await update(ref(db, "reservations/" + editingId), data);
-        showToast("Modifié", "#f39c12");
-      } else {
-        await push(reservationsRef, data);
-        showToast("Ajouté", "#16a34a");
-      }
-      clearForm();
-    });
+// 1️⃣ Construire l'adresse complète
+const fullAddress = `${data.adresse}, ${data.codePostal} ${data.commune}`;
 
-    $("#btnCancelEdit").addEventListener("click", () => {
-      editingId = null;
-      clearForm();
+try {
+    // 2️⃣ Géocoder AVANT firebase
+    const resGeo = await fetch(
+        `https://api.openrouteservice.org/geocode/search?api_key=${ORS_API_KEY}&text=${encodeURIComponent(fullAddress)}`
+    );
+    const geo = await resGeo.json();
+
+    if (geo?.features?.length > 0) {
+        // ⚠️ ORS → [lng, lat], Leaflet → [lat, lng]
+        const [lng, lat] = geo.features[0].geometry.coordinates;
+        data.coords = { lat, lng }; // 3️⃣ Ajout coords
+        console.log("🔥 Coordonnées ajoutées :", data.coords);
+    }
+} catch (err) {
+    console.error("Erreur geocoding :", err);
+}
+// === OPTIMISATION CRENEAU (moins de 10 km entre missions) ===
+try {
+    if (data.coords && data.coords.lat != null && data.coords.lng != null) {
+
+        const nearby = await findNearbyMissions(data.date, data.coords);
+        const eco = await computeEconomyEuros(data.coords);
+
+        if (nearby.length && eco != null) {
+            const best = nearby[0]; // mission la plus proche
+
+            if (best.start !== data.start || best.end !== data.end) {
+                const msg = 
+                `💡 Optimisation possible\n\n` +
+                `Une mission est déjà planifiée à proximité (${best.distanceKm.toFixed(1)} km)\n` +
+                `au créneau ${best.start.slice(0,5)}–${best.end.slice(0,5)}.\n\n` +
+                `Choisir ce créneau permettrait au client d'économiser\n` +
+                `≈ ${eco.toFixed(2)} € (trajet Sprimont → mission).\n\n` +
+                `👉 Voulez-vous appliquer ce créneau optimisé ?`;
+
+                if (confirm(msg)) {
+                    data.start = best.start;
+                    data.end = best.end;
+                }
+            }
+        }
+    }
+} catch (err) {
+    console.error("Erreur optimisation créneau :", err);
+}
+
+// 4️⃣ ENFIN on enregistre dans Firebase
+if (editingId) {
+    await update(ref(db, "reservations/" + editingId), data);
+    showToast("Modifié", "#f39c12");
+} else {
+const newRef = firebasePush(reservationsRef);
+await firebaseSet(newRef, {
+  ...data,
+  coords: data.coords || null,
+  updatedAt: Date.now()
+});
+
+    showToast("Ajouté", "#16a34a");
+}
+
+
+clearForm();
+
     });
 
    function clearForm() {
@@ -2035,6 +2239,28 @@ document.querySelector('.type-btn[data-type="LFT"]').classList.add("active");
         $("#empty").style.display = "none";
 
         arr.forEach(d => box.appendChild(renderItem(d.id, d)));
+        // 🗺️ Marqueurs sur la carte Leaflet
+map.eachLayer(l => {
+  if (l instanceof L.Marker) map.removeLayer(l);
+});
+
+arr.forEach(d => {
+  if (d.coords && d.coords.lat && d.coords.lng) {
+    L.marker([d.coords.lat, d.coords.lng])
+      .addTo(map)
+      .bindPopup(`
+        ${d.start.slice(0,5)} - ${d.end.slice(0,5)}<br>
+        ${d.adresse || ""}
+      `);
+  }
+});
+
+// Centrer si au moins 1 réservation avec GPS
+const withCoords = arr.filter(d => d.coords);
+if (withCoords.length) {
+  map.setView([withCoords[0].coords.lat, withCoords[0].coords.lng], 12);
+}
+
       });
     }
     listenDay($("#datePicker").value);
@@ -2174,7 +2400,7 @@ if (d.type === "LFT") {
         if (d.type === "LFT") lft.insertAdjacentHTML("beforeend", rowHtml(d));
       });
 
-      // ✏️ depuis Admin -> focus réservation
+      // ✏️ depuis Admin -> focus
       [...exp.querySelectorAll('button[data-etype="edit"]'),
       ...lft.querySelectorAll('button[data-etype="edit"]')].forEach(b => {
         b.addEventListener("click", async () => {
@@ -2805,7 +3031,90 @@ if (btnWeekView) {
   btnWeekView.addEventListener("click", renderWeek);
 }
 
+// =========================
+// ADRESSE INTERNE — Auto complète + fusion adresse
+// =========================
 
+const rueEl     = document.getElementById("rue");
+const numEl     = document.getElementById("numero");
+const cpIntEl   = document.getElementById("cpIntern");
+const comIntEl  = document.getElementById("communeIntern");
+const adrFullEl = document.getElementById("adresseFull");
+const adrHidden = document.getElementById("adresse");
+
+// ⚙️ Fusion automatique de l’adresse finale
+function updateAdresseFull() {
+  const rue = (rueEl.value || "").trim();
+  const num = (numEl.value || "").trim();
+  const cp  = (cpIntEl.value || "").trim();
+  const com = (comIntEl.value || "").trim().toUpperCase();
+
+  if (!rue || !num || !cp || !com) {
+    adrFullEl.value = "";
+    adrHidden.value = "";
+    return;
+  }
+
+  const final = `${rue} ${num}, ${cp} ${com}`;
+  adrFullEl.value = final;
+  adrHidden.value = final; // ← Compatibilité Firebase actuelle
+}
+
+// Mise à jour live dès que l’utilisateur saisit ou modifie
+[rueEl, numEl, cpIntEl, comIntEl].forEach(el => {
+  el?.addEventListener("input", updateAdresseFull);
+});
+
+// =========================
+// Autocomplétion CP → Commune
+// =========================
+cpIntEl?.addEventListener("input", () => {
+  const cp = cpIntEl.value.trim();
+  if (cp.length === 4 && window.communes) {
+    const c = window.communes.find(v => String(v.cp) === cp);
+    if (c) {
+      comIntEl.value = c.nom.toUpperCase();
+      updateAdresseFull();
+    }
+  }
+});
+
+// =========================
+// Autocomplétion Commune → CP
+// =========================
+comIntEl?.addEventListener("input", () => {
+  const txt = comIntEl.value.trim().toLowerCase();
+  if (txt.length >= 3 && window.communes) {
+    const c = window.communes.find(v => v.nom.toLowerCase().includes(txt));
+    if (c) {
+      cpIntEl.value = c.cp;
+      updateAdresseFull();
+    }
+  }
+});
+// =========================
+// Géocodage ORS → coord GPS
+// =========================
+async function geocodeAdresse(addr) {
+  try {
+    const apiKey = ORS_API_KEY;
+    const url = `https://api.openrouteservice.org/geocode/search?api_key=${apiKey}&text=${encodeURIComponent(addr)}&boundary.country=BE`;
+    const res = await fetch(url);
+    const data = await res.json();
+    const feat = data.features?.[0];
+    if (!feat) return null;
+    return {
+      lat: feat.geometry.coordinates[1],
+      lng: feat.geometry.coordinates[0]
+    };
+  } catch (e) {
+    console.error("⚠️ Erreur ORS:", e);
+    return null;
+  }
+}
+window.geocodeAdresse = geocodeAdresse;
+
+}); // ← fermeture du DOMContentLoaded
 
 </script>
 
@@ -3043,11 +3352,9 @@ Voici ma réservation 📌`;
 
 <!-- === Vue semaine (avec retour sur clic “Réservations”) === -->
 <script>
-const { firebaseRef: ref, firebaseQuery: query, firebaseOrderByChild: orderByChild,
-        firebaseStartAt: startAt, firebaseEndAt: endAt, firebaseOnValue: onValue } = window;
-
+ 
 const db = window.db;
-const reservationsRef = ref(db, "reservations");
+
 
 // === Conteneur caché pour l’agenda semaine ===
 const weekContainer = document.createElement("div");
@@ -3290,13 +3597,19 @@ btnExportLFT.addEventListener("click", () => exportCSV("LFT"));
 
 document.querySelector("h3.admin-h3").before(btnExportEXP);
 document.querySelector("h3.admin-h3 + table").after(btnExportLFT);
-// === Sous-onglet PRO Pas encore encodés ===
-$("#btnProAlphabet").addEventListener("click", () => {
-  $$(".tab-btn").forEach(x => x.classList.remove("active"));
-  $$(".tab-panel").forEach(p => p.classList.remove("active"));
-  $("#tab-proalphabet").classList.add("active");
-  loadProAlphabet();
-});
+
+// 🧷 Début du bloc qui doit attendre le DOM chargé
+document.addEventListener("DOMContentLoaded", () => {
+
+  // === Sous-onglet PRO Pas encore encodés ===
+  $("#btnProAlphabet").addEventListener("click", () => {
+    $$(".tab-btn").forEach(x => x.classList.remove("active"));
+    $$(".tab-panel").forEach(p => p.classList.remove("active"));
+    $("#tab-proalphabet").classList.add("active");
+  });
+
+}); // 🧷 Fin du DOMContentLoaded
+
 
 // Fonction pour nettoyer le nom d'entreprise (ignorer SRL, SA, etc.)
 function normalizeName(nom) {

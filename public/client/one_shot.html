@@ -1,163 +1,499 @@
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Réservation One Shot</title>
+
+  <!-- Même design client -->
   <link rel="stylesheet" href="../css/theme_client.css" />
+
+  <style>
+    .slots-wrapper.hidden { display: none; }
+    #slots { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+    .slot-btn {
+      padding: 8px 12px;
+      background: #eee;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      cursor: pointer;
+      transition: .2s;
+      position: relative;
+    }
+    .slot-btn:hover { background: #ddd; }
+    .slot-btn.selected {
+      background: #c3e8ff;
+      border-color: #1e90ff;
+      font-weight: 600;
+    }
+    .slot-optimise {
+      background: #d9ffe0 !important;
+      border-color: #32a852 !important;
+    }
+    .badge-opt {
+      position: absolute;
+      top: -6px;
+      right: -6px;
+      background: #32a852;
+      color: #fff;
+      padding: 2px 5px;
+      font-size: 10px;
+      border-radius: 6px;
+    }
+  </style>
 </head>
 
 <body>
   <div class="page-container">
     <h1>Réservation One Shot</h1>
+    <hr />
 
     <form id="form-one-shot" novalidate>
-
-      <!-- DATE -->
-      <label>Date :</label>
+      <!-- Date -->
+      <label for="date">Date souhaitée :</label>
       <input type="date" id="date" required />
 
-      <!-- CODE POSTAL -->
-      <label>Code postal :</label>
-      <div class="field-with-suggestions">
-        <input type="text" id="cp" maxlength="5" required />
-        <div id="suggestions-cp" class="suggestion-box hidden"></div>
-      </div>
+      <!-- Code postal -->
+      <label for="cp">Code postal :</label>
+      <input type="text" id="cp" maxlength="4" required />
 
-      <!-- COMMUNE -->
-      <label>Commune :</label>
+      <!-- Commune -->
+      <label for="commune">Commune :</label>
       <input type="text" id="commune" required />
 
-      <!-- 30 MIN EN PLUS (comme sur mission double) -->
-      <label>Ajouter 30 min ?</label>
-      <input type="checkbox" id="extra30" />
+      <!-- Adresse -->
+      <label for="adresse">Adresse complète :</label>
+      <input type="text" id="adresse" placeholder="Rue + n° + CP" required />
+
+      <!-- Contact -->
+      <label for="telephone">Téléphone :</label>
+      <input type="tel" id="telephone" required />
+
+      <label for="email">E-mail :</label>
+      <input type="email" id="email" required />
+
+      <label for="note">Note complémentaire :</label>
+      <textarea id="note" rows="2"></textarea>
 
       <hr />
-      <h2>Créneaux</h2>
 
-      <!-- WRAPPER CRÉNEAUX (ton slot.js se charge d'afficher les créneaux dedans) -->
+      <h2>Créneaux disponibles</h2>
       <div id="slots-wrapper" class="slots-wrapper hidden">
+        <p id="msg-slot"></p>
         <div id="slots"></div>
-        <p id="slot-msg" class="message-date hidden"></p>
       </div>
-      <input type="hidden" id="slot" />
+
+      <input type="hidden" id="slot" required />
 
       <hr />
-      <p><strong>Total :</strong> <span id="total">85,00 €</span></p>
 
-      <button type="button" id="pay">Payer</button>
+      <button type="button" id="btn-reserver" class="btn-primary">
+        Réserver ce créneau
+      </button>
     </form>
   </div>
 
-  <!-- STRIPE -->
+  <!-- Firebase & Stripe -->
   <script src="https://js.stripe.com/v3/"></script>
 
-  <!-- TES SCRIPTS (comme sur la mission double) -->
-  <script src="../communes_client.js"></script>
-  <script type="module" src="../js/firebase_client.js"></script>
-  <script src="./js/slot.js"></script>
+ <script type="module">
+/* ------------------------------------------------------------------
+   Firebase — même config que l'index
+------------------------------------------------------------------ */
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+import {
+  getDatabase,
+  ref,
+  get,
+  push,
+  update
+} from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
 
-  <script>
-    // =====================================================
-    // CONFIG TARIFS ONE SHOT
-    // =====================================================
+const firebaseConfig = {
+  apiKey: "AIzaSyC5Rly--5aw3vSEuhRcyZxzD5fg1JJowbE",
+  authDomain: "lift-agenda-app.firebaseapp.com",
+  databaseURL: "https://lift-agenda-app-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "lift-agenda-app",
+  storageBucket: "lift-agenda-app.firebasestorage.app",
+  messagingSenderId: "162981688841",
+  appId: "1:162981688841:web:8ceee20cd7500aedb1ead8"
+};
 
-    const PRIX_BASE_ONE_SHOT = 85;   // prix de base (30 min de mission) -> ajuste si besoin
-    const PRIX_EXTRA_30      = 15;   // supplément pour +30 min         -> ajuste si besoin
-    const PRIX_KM            = 0.5;  // prix au km (comme la mission double)
+const app = initializeApp(firebaseConfig);
+const db  = getDatabase(app);
 
-    // =====================================================
-    // CALCUL PRIX ONE SHOT
-    // =====================================================
+/* ------------------------------------------------------------------
+   ORS — géocodage & distances
+------------------------------------------------------------------ */
+const ORS_KEY = "eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6IjIzMWFmY2M1YzhiOTQ4YjlhYWY1ZTE2YWQ5NDhkZWY5IiwiaCI6Im11cm11cjY0In0=";
 
-    function calculerPrixOneShot() {
-      // Base
-      let prixBase = PRIX_BASE_ONE_SHOT;
+// Dépôt Sprimont (approx Rue Mazeure 30, Sprimont)
+const DEPOT_SPRIMONT = { lat: 50.510145, lng: 5.676349 };
 
-      // Option 30 min en plus
-      const extra = document.getElementById("extra30").checked ? PRIX_EXTRA_30 : 0;
+async function geocodeAdresse(adresse) {
+  try {
+    // On tente d'abord avec l'adresse complète
+    const url = `https://api.openrouteservice.org/geocode/search?` +
+      `api_key=${ORS_KEY}&text=${encodeURIComponent(adresse)}&boundary.country=BE&size=1`;
+    const res = await fetch(url);
+    const data = await res.json();
+    const feat = data.features?.[0];
+    if (!feat) return null;
+    return {
+      lat: feat.geometry.coordinates[1],
+      lng: feat.geometry.coordinates[0],
+    };
+  } catch (e) {
+    console.error("Erreur ORS geocode:", e);
+    return null;
+  }
+}
 
-      // Distance via le tableau des communes
-      const cp = document.getElementById("cp").value;
-      let distance = 0;
+function distanceKm(a, b) {
+  const R = 6371;
+  const toRad = d => d * Math.PI / 180;
+  const dLat = toRad(b.lat - a.lat);
+  const dLng = toRad(b.lng - a.lng);
+  const lat1 = toRad(a.lat);
+  const lat2 = toRad(b.lat);
+  const h = Math.sin(dLat / 2) ** 2 +
+            Math.cos(lat1) * Math.cos(lat2) *
+            Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(h));
+}
 
-      if (typeof communes !== "undefined" && communes && cp) {
-        const commune = communes.find(c => String(c.cp) === String(cp));
-        distance = commune ? (commune.distance || 0) : 0;
+/* ------------------------------------------------------------------
+   Chargement des réservations d'un jour + migration coords
+------------------------------------------------------------------ */
+async function getReservationsForDate(dateStr) {
+  const resRef = ref(db, "reservations");
+  const snap = await get(resRef);
+  if (!snap.exists()) return [];
+
+  const all = snap.val();
+  const list = [];
+
+  for (const key in all) {
+    const r = all[key];
+    if (r.date !== dateStr) continue;
+
+    // Migration coords si manques et adresse présente
+    if (!r.coords && r.adresse) {
+      console.log("Migration coords pour", r.adresse);
+      const coords = await geocodeAdresse(r.adresse);
+      if (coords) {
+        await update(ref(db, `reservations/${key}`), { coords });
+        r.coords = coords;
       }
-
-      const prixDeplacement = distance * PRIX_KM;
-
-      // Bonus/malus d'optimisation selon le créneau
-      const optimisation = window.creneauOptimisation || 0;
-
-      const prixTotal = prixBase + extra + prixDeplacement + optimisation;
-
-      // Affichage
-      document.getElementById("total").textContent =
-        prixTotal.toFixed(2).replace(".", ",") + " €";
-
-      return prixTotal;
     }
 
-    // =====================================================
-    // QUAND L'UTILISATEUR CHOISIT UN CRÉNEAU
-    // (slot.js doit appeler window.onCreneauSelected(bonus))
-    // =====================================================
+    if (r.start && r.end) {
+      list.push(r);
+    }
+  }
 
-    window.onCreneauSelected = function (bonus) {
-      window.creneauOptimisation = bonus || 0;
-      calculerPrixOneShot();
+  return list;
+}
+
+/* ------------------------------------------------------------------
+   Règles métier
+------------------------------------------------------------------ */
+const DUREE_MISSION = 30;          // durée ONE SHOT
+const RAYON_OPTIM   = 10;          // optimisé si < 10 km
+const LIMITE_PROCHE = 5;           // très proche si < 5 km
+const TAMPON_PROCHE = 15;          // minutes si < 5 km
+const TAMPON_LOIN   = 30;          // minutes sinon
+
+const HEURE_DEBUT   = 8 * 60;      // 08h00
+const HEURE_LAST    = 17 * 60 + 30;// dernier début : 17h30
+
+/* ------------------------------------------------------------------
+   Helpers temps
+------------------------------------------------------------------ */
+function minutesToHHMM(m) {
+  const h  = Math.floor(m / 60);
+  const mm = m % 60;
+  return `${String(h).padStart(2,"0")}:${String(mm).padStart(2,"0")}`;
+}
+
+function HHMMToMinutes(hhmm) {
+  const [h, m] = hhmm.split(":").map(Number);
+  return h * 60 + m;
+}
+
+/* ------------------------------------------------------------------
+   Chevauchement avec tampon
+------------------------------------------------------------------ */
+function chevaucheAvecTampon(slotStart, slotEnd, missionStart, missionEnd, tampon) {
+  // vrai s'il y a conflit en tenant compte du tampon
+  return !(
+    slotEnd + tampon   <= missionStart ||
+    slotStart >= missionEnd + tampon
+  );
+}
+
+/* ------------------------------------------------------------------
+   UI Créneaux
+------------------------------------------------------------------ */
+const dateEl     = document.getElementById("date");
+const cpEl       = document.getElementById("cp");
+const communeEl  = document.getElementById("commune");
+const addrEl     = document.getElementById("adresse");
+const wrapper    = document.getElementById("slots-wrapper");
+const slotsDiv   = document.getElementById("slots");
+const msgSlot    = document.getElementById("msg-slot");
+const slotHidden = document.getElementById("slot");
+
+/* Debounce pour éviter le clignotement */
+let debounceTimer = null;
+function scheduleUpdateSlots() {
+  if (debounceTimer) clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(updateSlotsUI, 400);
+}
+
+/* ------------------------------------------------------------------
+   Moteur principal : génération des créneaux
+------------------------------------------------------------------ */
+async function updateSlotsUI() {
+  slotsDiv.innerHTML = "";
+  slotHidden.value = "";
+  wrapper.classList.add("hidden");
+  msgSlot.textContent = "";
+
+  const date    = dateEl.value;
+  const cp      = cpEl.value.trim();
+  const commune = communeEl.value.trim();
+  const adresse = addrEl.value.trim();
+
+  if (!date || !commune || !adresse) return;
+
+  // Construction d'une adresse pleine
+  const fullAdresse = cp
+    ? `${adresse}, ${cp} ${commune}, Belgique`
+    : `${adresse}, ${commune}, Belgique`;
+
+  const coordsClient = await geocodeAdresse(fullAdresse);
+  if (!coordsClient) {
+    wrapper.classList.remove("hidden");
+    msgSlot.textContent = "Adresse introuvable. Vérifiez l'écriture.";
+    return;
+  }
+
+  const kmDepotClient = distanceKm(DEPOT_SPRIMONT, coordsClient);
+  const econStandard  = kmDepotClient * 0.5; // € de base
+
+  console.log("Client :", fullAdresse, coordsClient, "km dépôt:", kmDepotClient.toFixed(2));
+
+  // Récupérer les missions du jour
+  const missions = await getReservationsForDate(date);
+  const missionsMinutes = missions
+    .filter(m => m.start && m.end)
+    .map(m => ({
+      start: HHMMToMinutes(m.start),
+      end:   HHMMToMinutes(m.end),
+      coords: m.coords || null,
+      adresse: m.adresse || ""
+    }));
+
+  // Créneaux candidats : départ tous les 15 min
+  const slots = [];
+  for (let start = HEURE_DEBUT; start <= HEURE_LAST; start += 15) {
+    const end = start + DUREE_MISSION;
+    slots.push({ start, end });
+  }
+
+  const today  = new Date().toISOString().slice(0,10);
+  const now    = new Date();
+  const nowMin = now.getHours()*60 + now.getMinutes();
+
+  const results = [];
+
+  for (const s of slots) {
+    // Pas de créneau dans le passé pour aujourd'hui
+    if (date === today && s.start < nowMin + 15) continue;
+
+    let interdit = false;
+    let minDist  = Infinity;
+    let minDistSous5 = Infinity;
+
+    for (const mission of missionsMinutes) {
+      let tampon = TAMPON_LOIN;
+
+      if (mission.coords) {
+        const dKm = distanceKm(coordsClient, mission.coords);
+        if (dKm < minDist) minDist = dKm;
+        if (dKm < LIMITE_PROCHE && dKm < minDistSous5) minDistSous5 = dKm;
+        if (dKm < LIMITE_PROCHE) {
+          tampon = TAMPON_PROCHE;
+        }
+      }
+
+      if (chevaucheAvecTampon(s.start, s.end, mission.start, mission.end, tampon)) {
+        interdit = true;
+        break;
+      }
+    }
+
+    if (interdit) continue;
+
+    const isOptim = minDist <= RAYON_OPTIM;   // < 10 km d'une mission
+    const isExtra = minDistSous5 <= LIMITE_PROCHE; // < 5 km
+
+    // Calcul économie
+    let econAffiche = 0;
+    let typeOpt     = "normal";
+    let sortBonus   = 0;
+
+    if (isExtra) {
+      // EXTRA optimisé = +40% d'économie
+      const econExtraTotal = econStandard * 1.4;
+      econAffiche = econExtraTotal;
+      typeOpt     = "extra";
+      sortBonus   = -2;
+    } else if (isOptim) {
+      econAffiche = econStandard;
+      typeOpt     = "optim";
+      sortBonus   = -1;
+    }
+
+    results.push({
+      ...s,
+      labelHeure: `${minutesToHHMM(s.start)} – ${minutesToHHMM(s.end)}`,
+      typeOpt,
+      econAffiche,
+      sortBonus
+    });
+  }
+
+  if (!results.length) {
+    wrapper.classList.remove("hidden");
+    msgSlot.textContent = "Aucun créneau disponible pour cette date.";
+    return;
+  }
+
+  // Tri : EXTRA d'abord, puis OPTIM, puis normal, puis par heure
+  results.sort((a, b) => {
+    if (a.sortBonus !== b.sortBonus) return a.sortBonus - b.sortBonus;
+    return a.start - b.start;
+  });
+
+  wrapper.classList.remove("hidden");
+  msgSlot.textContent = "Sélectionnez un créneau :";
+
+  results.forEach(r => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "slot-btn";
+
+    let bandeau = "";
+    if (r.typeOpt === "extra") {
+      bandeau = `<div class="slot-banner-extra">🔶 EXTRA optimisé – ${r.econAffiche.toFixed(1)} €</div>`;
+      btn.classList.add("slot-extra");
+    } else if (r.typeOpt === "optim") {
+      bandeau = `<div class="slot-banner-optim">🟢 Optimisé – ${r.econAffiche.toFixed(1)} €</div>`;
+      btn.classList.add("slot-optimise");
+    }
+
+    btn.innerHTML = `
+      ${bandeau}
+      <div>${r.labelHeure}</div>
+    `;
+
+    btn.onclick = () => {
+      document.querySelectorAll(".slot-btn").forEach(b => b.classList.remove("selected"));
+      btn.classList.add("selected");
+      slotHidden.value = r.labelHeure;
     };
 
-    // Recalcul quand CP ou extra 30 min change
-    document.getElementById("cp").addEventListener("input", calculerPrixOneShot);
-    document.getElementById("extra30").addEventListener("change", calculerPrixOneShot);
+    slotsDiv.appendChild(btn);
+  });
+}
 
-    // =====================================================
-    // BOUTON PAYER
-    // =====================================================
+/* ------------------------------------------------------------------
+   Prix One Shot (utilisé à l'enregistrement)
+------------------------------------------------------------------ */
+function calculPrix(distanceKm) {
+  const base     = 85;
+  const variable = distanceKm * 0.5;
+  return Math.round((base + variable) * 100) / 100;
+}
 
-    document.getElementById("pay").addEventListener("click", () => {
-      const prixTotal = calculerPrixOneShot();
-      lancerPaiement(prixTotal, "Mission One Shot");
-    });
+/* ------------------------------------------------------------------
+   Écouteurs pour recalculer les créneaux
+------------------------------------------------------------------ */
+dateEl.addEventListener("change", scheduleUpdateSlots);
+cpEl.addEventListener("input", scheduleUpdateSlots);
+communeEl.addEventListener("input", scheduleUpdateSlots);
+addrEl.addEventListener("input", scheduleUpdateSlots);
 
-    // =====================================================
-    // INTÉGRATION STRIPE (copiée/adaptée de mission double)
-    // =====================================================
+/* ------------------------------------------------------------------
+   Enregistrement de la réservation
+------------------------------------------------------------------ */
+document.getElementById("btn-reserver").addEventListener("click", async () => {
+  const telephoneEl = document.getElementById("telephone");
+  const emailEl     = document.getElementById("email");
+  const noteEl      = document.getElementById("note");
 
-    async function lancerPaiement(prixTotal, description) {
-      if (!prixTotal || prixTotal <= 0) {
-        alert("Le prix n’a pas pu être calculé.");
-        return;
-      }
+  if (!dateEl.value || !communeEl.value || !addrEl.value ||
+      !telephoneEl.value || !emailEl.value) {
+    alert("Merci de compléter tous les champs obligatoires.");
+    return;
+  }
 
-      try {
-        const response = await fetch("/.netlify/functions/create-checkout-session", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            amount: prixTotal,
-            description: description
-          })
-        });
+  if (!slotHidden.value) {
+    alert("Veuillez sélectionner un créneau.");
+    return;
+  }
 
-        const data = await response.json();
+  const cp      = cpEl.value.trim();
+  const commune = communeEl.value.trim();
+  const adresse = addrEl.value.trim();
 
-        const stripe = Stripe("pk_test_51SXNhuQBlPkBPQsBNpCjAXfbaeCd8pWKYy2qYiN0tUZQFMqkoRPydrtsI6PSLFjpecdYFp0zDKTMCQxeeVFGq1YX00kTjbvtsw");
+  const fullAdresse = cp
+    ? `${adresse}, ${cp} ${commune}, Belgique`
+    : `${adresse}, ${commune}, Belgique`;
 
-        stripe.redirectToCheckout({ sessionId: data.sessionId });
-      } catch (e) {
-        console.error(e);
-        alert("Erreur lors du lancement du paiement.");
-      }
-    }
+  const coords = await geocodeAdresse(fullAdresse);
+  if (!coords) {
+    alert("Adresse invalide. Impossible d'enregistrer.");
+    return;
+  }
 
-    // Appel initial pour afficher un total cohérent dès le début
-    calculerPrixOneShot();
-  </script>
+  const km   = distanceKm(DEPOT_SPRIMONT, coords);
+  const prix = calculPrix(km);
+
+  const [hStart, hEnd] = slotHidden.value.split("–").map(s => s.trim());
+  const start = hStart;
+  const end   = hEnd;
+
+  const reservation = {
+    type: "LFT",
+    subType: "ONE_SHOT",
+    date: dateEl.value,
+    start,
+    end,
+    adresse: fullAdresse.toUpperCase(),
+    coords,
+    clientPhone: telephoneEl.value,
+    clientEmail: emailEl.value,
+    note: noteEl.value || "",
+    prix,
+    createdAt: new Date().toISOString()
+  };
+
+  console.log("🟦 Nouvelle réservation One Shot :", reservation);
+
+  await push(ref(db, "reservations"), reservation);
+
+  alert(`Réservation enregistrée ! Prix estimé : ${prix.toFixed(2)} €`);
+
+  // Tu peux rediriger ici si tu veux :
+  // window.location.href = "/merci.html";
+});
+</script>
 
 </body>
 </html>
+
 
