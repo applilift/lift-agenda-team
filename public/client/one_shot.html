@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -6,12 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Réservation One Shot</title>
 
-  <!-- Même design client -->
+  <!-- Ton thème client existant -->
   <link rel="stylesheet" href="../css/theme_client.css" />
 
   <style>
     .slots-wrapper.hidden { display: none; }
     #slots { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+
     .slot-btn {
       padding: 8px 12px;
       background: #eee;
@@ -20,26 +20,45 @@
       cursor: pointer;
       transition: .2s;
       position: relative;
+      min-width: 120px;
+      text-align: left;
     }
+
     .slot-btn:hover { background: #ddd; }
+
     .slot-btn.selected {
       background: #c3e8ff;
       border-color: #1e90ff;
       font-weight: 600;
     }
+
     .slot-optimise {
-      background: #d9ffe0 !important;
-      border-color: #32a852 !important;
+      border-color: #2ecc71;
+      background: #e9f9f0;
     }
-    .badge-opt {
-      position: absolute;
-      top: -6px;
-      right: -6px;
-      background: #32a852;
+
+    .slot-extra {
+      border-color: #f39c12;
+      background: #fff5e6;
+    }
+
+    .slot-banner-optim,
+    .slot-banner-extra {
+      font-size: 11px;
+      font-weight: 600;
       color: #fff;
-      padding: 2px 5px;
-      font-size: 10px;
-      border-radius: 6px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      margin-bottom: 3px;
+      display: inline-block;
+    }
+
+    .slot-banner-optim {
+      background: #2ecc71;
+    }
+
+    .slot-banner-extra {
+      background: #f39c12;
     }
   </style>
 </head>
@@ -56,7 +75,7 @@
 
       <!-- Code postal -->
       <label for="cp">Code postal :</label>
-      <input type="text" id="cp" maxlength="4" required />
+      <input type="text" id="cp" maxlength="4" />
 
       <!-- Commune -->
       <label for="commune">Commune :</label>
@@ -64,7 +83,7 @@
 
       <!-- Adresse -->
       <label for="adresse">Adresse complète :</label>
-      <input type="text" id="adresse" placeholder="Rue + n° + CP" required />
+      <input type="text" id="adresse" placeholder="Rue + n°" required />
 
       <!-- Contact -->
       <label for="telephone">Téléphone :</label>
@@ -94,406 +113,382 @@
     </form>
   </div>
 
-  <!-- Firebase & Stripe -->
   <script src="https://js.stripe.com/v3/"></script>
 
- <script type="module">
-/* ------------------------------------------------------------------
-   Firebase — même config que l'index
------------------------------------------------------------------- */
-import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-import {
-  getDatabase,
-  ref,
-  get,
-  push,
-  update
-} from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
+  <script type="module">
+    /* ------------------------------------------------------------------
+       Firebase
+    ------------------------------------------------------------------ */
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+    import {
+      getDatabase,
+      ref,
+      get,
+      push
+    } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyC5Rly--5aw3vSEuhRcyZxzD5fg1JJowbE",
-  authDomain: "lift-agenda-app.firebaseapp.com",
-  databaseURL: "https://lift-agenda-app-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "lift-agenda-app",
-  storageBucket: "lift-agenda-app.firebasestorage.app",
-  messagingSenderId: "162981688841",
-  appId: "1:162981688841:web:8ceee20cd7500aedb1ead8"
-};
-
-const app = initializeApp(firebaseConfig);
-const db  = getDatabase(app);
-
-/* ------------------------------------------------------------------
-   ORS — géocodage & distances
------------------------------------------------------------------- */
-const ORS_KEY = "eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6IjIzMWFmY2M1YzhiOTQ4YjlhYWY1ZTE2YWQ5NDhkZWY5IiwiaCI6Im11cm11cjY0In0=";
-
-// Dépôt Sprimont (approx Rue Mazeure 30, Sprimont)
-const DEPOT_SPRIMONT = { lat: 50.510145, lng: 5.676349 };
-
-async function geocodeAdresse(adresse) {
-  try {
-    // On tente d'abord avec l'adresse complète
-    const url = `https://api.openrouteservice.org/geocode/search?` +
-      `api_key=${ORS_KEY}&text=${encodeURIComponent(adresse)}&boundary.country=BE&size=1`;
-    const res = await fetch(url);
-    const data = await res.json();
-    const feat = data.features?.[0];
-    if (!feat) return null;
-    return {
-      lat: feat.geometry.coordinates[1],
-      lng: feat.geometry.coordinates[0],
+    const firebaseConfig = {
+      apiKey: "AIzaSyC5Rly--5aw3vSEuhRcyZxzD5fg1JJowbE",
+      authDomain: "lift-agenda-app.firebaseapp.com",
+      databaseURL: "https://lift-agenda-app-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "lift-agenda-app",
+      storageBucket: "lift-agenda-app.firebasestorage.app",
+      messagingSenderId: "162981688841",
+      appId: "1:162981688841:web:8ceee20cd7500aedb1ead8"
     };
-  } catch (e) {
-    console.error("Erreur ORS geocode:", e);
-    return null;
-  }
-}
 
-function distanceKm(a, b) {
-  const R = 6371;
-  const toRad = d => d * Math.PI / 180;
-  const dLat = toRad(b.lat - a.lat);
-  const dLng = toRad(b.lng - a.lng);
-  const lat1 = toRad(a.lat);
-  const lat2 = toRad(b.lat);
-  const h = Math.sin(dLat / 2) ** 2 +
-            Math.cos(lat1) * Math.cos(lat2) *
-            Math.sin(dLng / 2) ** 2;
-  return 2 * R * Math.asin(Math.sqrt(h));
-}
+    const app = initializeApp(firebaseConfig);
+    const db  = getDatabase(app);
 
-/* ------------------------------------------------------------------
-   Chargement des réservations d'un jour + migration coords
------------------------------------------------------------------- */
-async function getReservationsForDate(dateStr) {
-  const resRef = ref(db, "reservations");
-  const snap = await get(resRef);
-  if (!snap.exists()) return [];
+    /* ------------------------------------------------------------------
+       ORS — géocodage & distances
+    ------------------------------------------------------------------ */
+    const ORS_KEY = "eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6IjIzMWFmY2M1YzhiOTQ4YjlhYWY1ZTE2YWQ5NDhkZWY5IiwiaCI6Im11cm11cjY0In0=";
 
-  const all = snap.val();
-  const list = [];
+    // Dépôt Sprimont (Rue Mazeure 30)
+    const DEPOT_SPRIMONT = { lat: 50.510145, lng: 5.676349 };
 
-  for (const key in all) {
-    const r = all[key];
-    if (r.date !== dateStr) continue;
-
-    // Migration coords si manques et adresse présente
-    if (!r.coords && r.adresse) {
-      console.log("Migration coords pour", r.adresse);
-      const coords = await geocodeAdresse(r.adresse);
-      if (coords) {
-        await update(ref(db, `reservations/${key}`), { coords });
-        r.coords = coords;
+    async function geocodeAdresse(adresse) {
+      try {
+        const url = `https://api.openrouteservice.org/geocode/search?api_key=${ORS_KEY}&text=${encodeURIComponent(adresse)}&boundary.country=BE&size=1`;
+        const res = await fetch(url);
+        const data = await res.json();
+        const feat = data.features?.[0];
+        if (!feat) return null;
+        return {
+          lat: feat.geometry.coordinates[1],
+          lng: feat.geometry.coordinates[0],
+        };
+      } catch (e) {
+        console.error("Erreur ORS geocode:", e);
+        return null;
       }
     }
 
-    if (r.start && r.end) {
-      list.push(r);
+    function distanceKm(a, b) {
+      const R = 6371;
+      const toRad = d => d * Math.PI / 180;
+      const dLat = toRad(b.lat - a.lat);
+      const dLng = toRad(b.lng - a.lng);
+      const lat1 = toRad(a.lat);
+      const lat2 = toRad(b.lat);
+      const h = Math.sin(dLat / 2) ** 2 +
+                Math.cos(lat1) * Math.cos(lat2) *
+                Math.sin(dLng / 2) ** 2;
+      return 2 * R * Math.asin(Math.sqrt(h));
     }
-  }
 
-  return list;
-}
+    /* ------------------------------------------------------------------
+       Chargement des réservations d'un jour
+       (anciennes sans coords = bloquent le temps avec tampon 30 min)
+    ------------------------------------------------------------------ */
+    async function getReservationsForDate(dateStr) {
+      const resRef = ref(db, "reservations");
+      const snap = await get(resRef);
+      if (!snap.exists()) return [];
 
-/* ------------------------------------------------------------------
-   Règles métier
------------------------------------------------------------------- */
-const DUREE_MISSION = 30;          // durée ONE SHOT
-const RAYON_OPTIM   = 10;          // optimisé si < 10 km
-const LIMITE_PROCHE = 5;           // très proche si < 5 km
-const TAMPON_PROCHE = 15;          // minutes si < 5 km
-const TAMPON_LOIN   = 30;          // minutes sinon
+      const all = snap.val();
+      const list = [];
 
-const HEURE_DEBUT   = 8 * 60;      // 08h00
-const HEURE_LAST    = 17 * 60 + 30;// dernier début : 17h30
+      for (const key in all) {
+        const r = all[key];
+        if (r.date !== dateStr) continue;
+        if (!r.start || !r.end) continue;
+        list.push(r);
+      }
+      return list;
+    }
 
-/* ------------------------------------------------------------------
-   Helpers temps
------------------------------------------------------------------- */
-function minutesToHHMM(m) {
-  const h  = Math.floor(m / 60);
-  const mm = m % 60;
-  return `${String(h).padStart(2,"0")}:${String(mm).padStart(2,"0")}`;
-}
+    /* ------------------------------------------------------------------
+       Règles métier
+    ------------------------------------------------------------------ */
+    const DUREE_MISSION = 30;          // durée One Shot = 30 min
+    const RAYON_OPTIM   = 10;          // optimisé si <= 10 km
+    const LIMITE_PROCHE = 5;           // très proche si < 5 km
+    const TAMPON_PROCHE = 15;          // minutes si < 5 km
+    const TAMPON_LOIN   = 30;          // minutes sinon
 
-function HHMMToMinutes(hhmm) {
-  const [h, m] = hhmm.split(":").map(Number);
-  return h * 60 + m;
-}
+    const HEURE_DEBUT   = 8 * 60;      // 08h00
+    const HEURE_LAST    = 17 * 60 + 30;// dernier début = 17h30
 
-/* ------------------------------------------------------------------
-   Chevauchement avec tampon
------------------------------------------------------------------- */
-function chevaucheAvecTampon(slotStart, slotEnd, missionStart, missionEnd, tampon) {
-  // vrai s'il y a conflit en tenant compte du tampon
-  return !(
-    slotEnd + tampon   <= missionStart ||
-    slotStart >= missionEnd + tampon
-  );
-}
+    /* ------------------------------------------------------------------
+       Helpers temps
+    ------------------------------------------------------------------ */
+    function minutesToHHMM(m) {
+      const h  = Math.floor(m / 60);
+      const mm = m % 60;
+      return `${String(h).padStart(2,"0")}:${String(mm).padStart(2,"0")}`;
+    }
 
-/* ------------------------------------------------------------------
-   UI Créneaux
------------------------------------------------------------------- */
-const dateEl     = document.getElementById("date");
-const cpEl       = document.getElementById("cp");
-const communeEl  = document.getElementById("commune");
-const addrEl     = document.getElementById("adresse");
-const wrapper    = document.getElementById("slots-wrapper");
-const slotsDiv   = document.getElementById("slots");
-const msgSlot    = document.getElementById("msg-slot");
-const slotHidden = document.getElementById("slot");
+    function HHMMToMinutes(hhmm) {
+      const [h, m] = hhmm.split(":").map(Number);
+      return h * 60 + m;
+    }
 
-/* Debounce pour éviter le clignotement */
-let debounceTimer = null;
-function scheduleUpdateSlots() {
-  if (debounceTimer) clearTimeout(debounceTimer);
-  debounceTimer = setTimeout(updateSlotsUI, 400);
-}
+    /* ------------------------------------------------------------------
+       Chevauchement avec tampon
+    ------------------------------------------------------------------ */
+    function chevaucheAvecTampon(slotStart, slotEnd, missionStart, missionEnd, tampon) {
+      return !(
+        slotEnd + tampon   <= missionStart ||
+        slotStart >= missionEnd + tampon
+      );
+    }
 
-/* ------------------------------------------------------------------
-   Moteur principal : génération des créneaux
------------------------------------------------------------------- */
-async function updateSlotsUI() {
-  slotsDiv.innerHTML = "";
-  slotHidden.value = "";
-  wrapper.classList.add("hidden");
-  msgSlot.textContent = "";
+    /* ------------------------------------------------------------------
+       Sélecteurs DOM
+    ------------------------------------------------------------------ */
+    const dateEl     = document.getElementById("date");
+    const cpEl       = document.getElementById("cp");
+    const communeEl  = document.getElementById("commune");
+    const addrEl     = document.getElementById("adresse");
+    const wrapper    = document.getElementById("slots-wrapper");
+    const slotsDiv   = document.getElementById("slots");
+    const msgSlot    = document.getElementById("msg-slot");
+    const slotHidden = document.getElementById("slot");
 
-  const date    = dateEl.value;
-  const cp      = cpEl.value.trim();
-  const commune = communeEl.value.trim();
-  const adresse = addrEl.value.trim();
+    let debounceTimer = null;
+    function scheduleUpdateSlots() {
+      if (debounceTimer) clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(updateSlotsUI, 400);
+    }
 
-  if (!date || !commune || !adresse) return;
+    /* ------------------------------------------------------------------
+       Moteur principal : génération des créneaux
+    ------------------------------------------------------------------ */
+    async function updateSlotsUI() {
+      slotsDiv.innerHTML = "";
+      slotHidden.value = "";
+      wrapper.classList.add("hidden");
+      msgSlot.textContent = "";
 
-  // Construction d'une adresse pleine
-  const fullAdresse = cp
-    ? `${adresse}, ${cp} ${commune}, Belgique`
-    : `${adresse}, ${commune}, Belgique`;
+      const date    = dateEl.value;
+      const cp      = cpEl.value.trim();
+      const commune = communeEl.value.trim();
+      const adresse = addrEl.value.trim();
 
-  const coordsClient = await geocodeAdresse(fullAdresse);
-  if (!coordsClient) {
-    wrapper.classList.remove("hidden");
-    msgSlot.textContent = "Adresse introuvable. Vérifiez l'écriture.";
-    return;
-  }
+      if (!date || !commune || !adresse) return;
 
-  const kmDepotClient = distanceKm(DEPOT_SPRIMONT, coordsClient);
-  const econStandard  = kmDepotClient * 0.5; // € de base
+      const fullAdresse = cp
+        ? `${adresse}, ${cp} ${commune}, Belgique`
+        : `${adresse}, ${commune}, Belgique`;
 
-  console.log("Client :", fullAdresse, coordsClient, "km dépôt:", kmDepotClient.toFixed(2));
+      const coordsClient = await geocodeAdresse(fullAdresse);
+      if (!coordsClient) {
+        wrapper.classList.remove("hidden");
+        msgSlot.textContent = "Adresse introuvable. Vérifiez l'écriture.";
+        return;
+      }
 
-  // Récupérer les missions du jour
-  const missions = await getReservationsForDate(date);
-  const missionsMinutes = missions
-    .filter(m => m.start && m.end)
-    .map(m => ({
-      start: HHMMToMinutes(m.start),
-      end:   HHMMToMinutes(m.end),
-      coords: m.coords || null,
-      adresse: m.adresse || ""
-    }));
+      const kmDepotClient = distanceKm(DEPOT_SPRIMONT, coordsClient);
+      const econStandard  = kmDepotClient * 0.5; // € (marketing)
 
-  // Créneaux candidats : départ tous les 15 min
-  const slots = [];
-  for (let start = HEURE_DEBUT; start <= HEURE_LAST; start += 15) {
-    const end = start + DUREE_MISSION;
-    slots.push({ start, end });
-  }
+      console.log("Client :", fullAdresse, coordsClient, "km dépôt:", kmDepotClient.toFixed(2));
 
-  const today  = new Date().toISOString().slice(0,10);
-  const now    = new Date();
-  const nowMin = now.getHours()*60 + now.getMinutes();
+      const missions = await getReservationsForDate(date);
+      const missionsMinutes = missions.map(m => ({
+        start: HHMMToMinutes(m.start),
+        end:   HHMMToMinutes(m.end),
+        coords: m.coords || null,
+        adresse: m.adresse || "",
+      }));
 
-  const results = [];
+      // Créneaux candidats : départ tous les 15 min
+      const slots = [];
+      for (let start = HEURE_DEBUT; start <= HEURE_LAST; start += 15) {
+        const end = start + DUREE_MISSION;
+        slots.push({ start, end });
+      }
 
-  for (const s of slots) {
-    // Pas de créneau dans le passé pour aujourd'hui
-    if (date === today && s.start < nowMin + 15) continue;
+      const today  = new Date().toISOString().slice(0,10);
+      const now    = new Date();
+      const nowMin = now.getHours()*60 + now.getMinutes();
 
-    let interdit = false;
-    let minDist  = Infinity;
-    let minDistSous5 = Infinity;
+      const results = [];
 
-    for (const mission of missionsMinutes) {
-      let tampon = TAMPON_LOIN;
+      for (const s of slots) {
+        // pas de créneaux dans le passé
+        if (date === today && s.start < nowMin + 15) continue;
 
-      if (mission.coords) {
-        const dKm = distanceKm(coordsClient, mission.coords);
-        if (dKm < minDist) minDist = dKm;
-        if (dKm < LIMITE_PROCHE && dKm < minDistSous5) minDistSous5 = dKm;
-        if (dKm < LIMITE_PROCHE) {
-          tampon = TAMPON_PROCHE;
+        let interdit = false;
+        let minDist  = Infinity;
+        let minDistSous5 = Infinity;
+
+        for (const mission of missionsMinutes) {
+          let tampon = TAMPON_LOIN;
+
+          if (mission.coords) {
+            const dKm = distanceKm(coordsClient, mission.coords);
+            if (dKm < minDist) minDist = dKm;
+            if (dKm < LIMITE_PROCHE && dKm < minDistSous5) minDistSous5 = dKm;
+            if (dKm < LIMITE_PROCHE) {
+              tampon = TAMPON_PROCHE;
+            }
+          }
+
+          // même si pas de coords, on bloque au moins avec tampon 30 min
+          if (chevaucheAvecTampon(s.start, s.end, mission.start, mission.end, tampon)) {
+            interdit = true;
+            break;
+          }
         }
+
+        if (interdit) continue;
+
+        const isExtra = minDistSous5 <= LIMITE_PROCHE; // <5 km
+        const isOptim = !isExtra && (minDist <= RAYON_OPTIM); // <=10 km
+
+        let typeOpt   = "normal";
+        let econAff   = 0;
+        let sortBonus = 0;
+
+        if (isExtra) {
+          // EXTRA optimisé : +40%
+          econAff   = econStandard * 1.4;
+          typeOpt   = "extra";
+          sortBonus = -2;
+        } else if (isOptim) {
+          econAff   = econStandard;
+          typeOpt   = "optim";
+          sortBonus = -1;
+        }
+
+        results.push({
+          ...s,
+          labelHeure: `${minutesToHHMM(s.start)} – ${minutesToHHMM(s.end)}`,
+          typeOpt,
+          econAff,
+          sortBonus
+        });
       }
 
-      if (chevaucheAvecTampon(s.start, s.end, mission.start, mission.end, tampon)) {
-        interdit = true;
-        break;
+      if (!results.length) {
+        wrapper.classList.remove("hidden");
+        msgSlot.textContent = "Aucun créneau disponible pour cette date.";
+        return;
       }
+
+      // EXTRA d'abord, puis OPTIM, puis normal, puis par heure
+      results.sort((a, b) => {
+        if (a.sortBonus !== b.sortBonus) return a.sortBonus - b.sortBonus;
+        return a.start - b.start;
+      });
+
+      wrapper.classList.remove("hidden");
+      msgSlot.textContent = "Sélectionnez un créneau :";
+
+      results.forEach(r => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "slot-btn";
+
+        let bandeau = "";
+        if (r.typeOpt === "extra") {
+          bandeau = `<div class="slot-banner-extra">🔶 EXTRA optimisé – ${r.econAff.toFixed(1)} €</div>`;
+          btn.classList.add("slot-extra");
+        } else if (r.typeOpt === "optim") {
+          bandeau = `<div class="slot-banner-optim">🟢 Optimisé – ${r.econAff.toFixed(1)} €</div>`;
+          btn.classList.add("slot-optimise");
+        }
+
+        btn.innerHTML = `
+          ${bandeau}
+          <div>${r.labelHeure}</div>
+        `;
+
+        btn.onclick = () => {
+          document.querySelectorAll(".slot-btn").forEach(b => b.classList.remove("selected"));
+          btn.classList.add("selected");
+          slotHidden.value = r.labelHeure;
+        };
+
+        slotsDiv.appendChild(btn);
+      });
     }
 
-    if (interdit) continue;
-
-    const isOptim = minDist <= RAYON_OPTIM;   // < 10 km d'une mission
-    const isExtra = minDistSous5 <= LIMITE_PROCHE; // < 5 km
-
-    // Calcul économie
-    let econAffiche = 0;
-    let typeOpt     = "normal";
-    let sortBonus   = 0;
-
-    if (isExtra) {
-      // EXTRA optimisé = +40% d'économie
-      const econExtraTotal = econStandard * 1.4;
-      econAffiche = econExtraTotal;
-      typeOpt     = "extra";
-      sortBonus   = -2;
-    } else if (isOptim) {
-      econAffiche = econStandard;
-      typeOpt     = "optim";
-      sortBonus   = -1;
+    /* ------------------------------------------------------------------
+       Prix One Shot
+    ------------------------------------------------------------------ */
+    function calculPrix(distanceKm) {
+      const base     = 85;
+      const variable = distanceKm * 0.5;
+      return Math.round((base + variable) * 100) / 100;
     }
 
-    results.push({
-      ...s,
-      labelHeure: `${minutesToHHMM(s.start)} – ${minutesToHHMM(s.end)}`,
-      typeOpt,
-      econAffiche,
-      sortBonus
+    /* ------------------------------------------------------------------
+       Listeners pour recalculer les créneaux
+    ------------------------------------------------------------------ */
+    dateEl.addEventListener("change", scheduleUpdateSlots);
+    cpEl.addEventListener("input", scheduleUpdateSlots);
+    communeEl.addEventListener("input", scheduleUpdateSlots);
+    addrEl.addEventListener("input", scheduleUpdateSlots);
+
+    /* ------------------------------------------------------------------
+       Enregistrement de la réservation
+    ------------------------------------------------------------------ */
+    document.getElementById("btn-reserver").addEventListener("click", async () => {
+      const telephoneEl = document.getElementById("telephone");
+      const emailEl     = document.getElementById("email");
+      const noteEl      = document.getElementById("note");
+
+      if (!dateEl.value || !communeEl.value || !addrEl.value ||
+          !telephoneEl.value || !emailEl.value) {
+        alert("Merci de compléter tous les champs obligatoires.");
+        return;
+      }
+
+      if (!slotHidden.value) {
+        alert("Veuillez sélectionner un créneau.");
+        return;
+      }
+
+      const cp      = cpEl.value.trim();
+      const commune = communeEl.value.trim();
+      const adresse = addrEl.value.trim();
+
+      const fullAdresse = cp
+        ? `${adresse}, ${cp} ${commune}, Belgique`
+        : `${adresse}, ${commune}, Belgique`;
+
+      const coords = await geocodeAdresse(fullAdresse);
+      if (!coords) {
+        alert("Adresse invalide. Impossible d'enregistrer.");
+        return;
+      }
+
+      const km   = distanceKm(DEPOT_SPRIMONT, coords);
+      const prix = calculPrix(km);
+
+      const [hStart, hEnd] = slotHidden.value.split("–").map(s => s.trim());
+      const start = hStart;
+      const end   = hEnd;
+
+      const reservation = {
+        type: "LFT",
+        subType: "ONE_SHOT",
+        date: dateEl.value,
+        start,
+        end,
+        adresse: fullAdresse.toUpperCase(),
+        coords,
+        clientPhone: telephoneEl.value,
+        clientEmail: emailEl.value,
+        note: noteEl.value || "",
+        prix,
+        createdAt: new Date().toISOString()
+      };
+
+      console.log("🟦 Nouvelle réservation One Shot :", reservation);
+
+      await push(ref(db, "reservations"), reservation);
+
+      alert(`Réservation enregistrée ! Prix estimé : ${prix.toFixed(2)} €`);
+      // Éventuelle redirection :
+      // window.location.href = "/merci.html";
     });
-  }
-
-  if (!results.length) {
-    wrapper.classList.remove("hidden");
-    msgSlot.textContent = "Aucun créneau disponible pour cette date.";
-    return;
-  }
-
-  // Tri : EXTRA d'abord, puis OPTIM, puis normal, puis par heure
-  results.sort((a, b) => {
-    if (a.sortBonus !== b.sortBonus) return a.sortBonus - b.sortBonus;
-    return a.start - b.start;
-  });
-
-  wrapper.classList.remove("hidden");
-  msgSlot.textContent = "Sélectionnez un créneau :";
-
-  results.forEach(r => {
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.className = "slot-btn";
-
-    let bandeau = "";
-    if (r.typeOpt === "extra") {
-      bandeau = `<div class="slot-banner-extra">🔶 EXTRA optimisé – ${r.econAffiche.toFixed(1)} €</div>`;
-      btn.classList.add("slot-extra");
-    } else if (r.typeOpt === "optim") {
-      bandeau = `<div class="slot-banner-optim">🟢 Optimisé – ${r.econAffiche.toFixed(1)} €</div>`;
-      btn.classList.add("slot-optimise");
-    }
-
-    btn.innerHTML = `
-      ${bandeau}
-      <div>${r.labelHeure}</div>
-    `;
-
-    btn.onclick = () => {
-      document.querySelectorAll(".slot-btn").forEach(b => b.classList.remove("selected"));
-      btn.classList.add("selected");
-      slotHidden.value = r.labelHeure;
-    };
-
-    slotsDiv.appendChild(btn);
-  });
-}
-
-/* ------------------------------------------------------------------
-   Prix One Shot (utilisé à l'enregistrement)
------------------------------------------------------------------- */
-function calculPrix(distanceKm) {
-  const base     = 85;
-  const variable = distanceKm * 0.5;
-  return Math.round((base + variable) * 100) / 100;
-}
-
-/* ------------------------------------------------------------------
-   Écouteurs pour recalculer les créneaux
------------------------------------------------------------------- */
-dateEl.addEventListener("change", scheduleUpdateSlots);
-cpEl.addEventListener("input", scheduleUpdateSlots);
-communeEl.addEventListener("input", scheduleUpdateSlots);
-addrEl.addEventListener("input", scheduleUpdateSlots);
-
-/* ------------------------------------------------------------------
-   Enregistrement de la réservation
------------------------------------------------------------------- */
-document.getElementById("btn-reserver").addEventListener("click", async () => {
-  const telephoneEl = document.getElementById("telephone");
-  const emailEl     = document.getElementById("email");
-  const noteEl      = document.getElementById("note");
-
-  if (!dateEl.value || !communeEl.value || !addrEl.value ||
-      !telephoneEl.value || !emailEl.value) {
-    alert("Merci de compléter tous les champs obligatoires.");
-    return;
-  }
-
-  if (!slotHidden.value) {
-    alert("Veuillez sélectionner un créneau.");
-    return;
-  }
-
-  const cp      = cpEl.value.trim();
-  const commune = communeEl.value.trim();
-  const adresse = addrEl.value.trim();
-
-  const fullAdresse = cp
-    ? `${adresse}, ${cp} ${commune}, Belgique`
-    : `${adresse}, ${commune}, Belgique`;
-
-  const coords = await geocodeAdresse(fullAdresse);
-  if (!coords) {
-    alert("Adresse invalide. Impossible d'enregistrer.");
-    return;
-  }
-
-  const km   = distanceKm(DEPOT_SPRIMONT, coords);
-  const prix = calculPrix(km);
-
-  const [hStart, hEnd] = slotHidden.value.split("–").map(s => s.trim());
-  const start = hStart;
-  const end   = hEnd;
-
-  const reservation = {
-    type: "LFT",
-    subType: "ONE_SHOT",
-    date: dateEl.value,
-    start,
-    end,
-    adresse: fullAdresse.toUpperCase(),
-    coords,
-    clientPhone: telephoneEl.value,
-    clientEmail: emailEl.value,
-    note: noteEl.value || "",
-    prix,
-    createdAt: new Date().toISOString()
-  };
-
-  console.log("🟦 Nouvelle réservation One Shot :", reservation);
-
-  await push(ref(db, "reservations"), reservation);
-
-  alert(`Réservation enregistrée ! Prix estimé : ${prix.toFixed(2)} €`);
-
-  // Tu peux rediriger ici si tu veux :
-  // window.location.href = "/merci.html";
-});
-</script>
-
+  </script>
 </body>
 </html>
+
 
 
