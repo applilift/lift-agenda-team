@@ -1,299 +1,245 @@
-console.log("🟢 slot.js — multi-missions + optimisation Sprimont active");
+console.log("🟢 slot.js chargé — GPS, optimisation 10km, tampon intelligent OK");
 
-// =========================
-// CONFIG
-// =========================
-const START_HOUR = 8;
-const END_HOUR   = 19;
-const PRIX_KM    = 0.5;   // économie = distance Sprimont → client × 0,5€
+// ======================================================
+// CONFIG GÉNÉRALE
+// ======================================================
+const ORS_KEY = "5b3ce3597851110001cf6248xxxxxxxxxxxx"; // ← mets ta vraie clé ORS
+const DEPOT = { lat: 50.4871, lon: 5.6011 }; // Sprimont
+const RAYON_OPTIM = 10;     // km pour optimisation
+const RAYON_EXTRA = 5;      // km → tampon 15 min
+const TAMPON_5KM = 15;      // minutes
+const TAMPON_10KM = 30;     // minutes
+const START = 8 * 60;       // 08h00
+const END = 18 * 60;        // 18h00 — dernier début
+const INCR = 15;            // créneaux toutes les 15 minutes
 
-
-// =========================
+// ======================================================
 // OUTILS TEMPS
-// =========================
-function toMinutes(hm) {
-  if (!hm) return NaN;
-
-  hm = String(hm).trim();
-
-  // Formats possibles :
-  // "17:00", "17:0", "17h00", "17H00", "17"
-  hm = hm.replace("H", ":").replace("h", ":");
-
-  const parts = hm.split(":").map(Number);
-
-  const h = parts[0];
-  const m = parts[1] || 0; // si "17" → 17:00
-
+// ======================================================
+function toMin(hhmm) {
+  const [h, m] = hhmm.split(":").map(Number);
   return h * 60 + m;
 }
-
-
-
-function format2(n) {
-  return String(n).padStart(2, "0");
+function fromMin(m) {
+  return `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
 }
 
-function labelFromMinutes(startMin, dureeMin) {
-  const h1 = Math.floor(startMin / 60);
-  const m1 = startMin % 60;
-  const endMin = startMin + dureeMin;
-  const h2 = Math.floor(endMin / 60);
-  const m2 = endMin % 60;
-  return `${format2(h1)}:${format2(m1)}-${format2(h2)}:${format2(m2)}`;
+// ======================================================
+// GÉNÉOCODAGE ORS
+// ======================================================
+async function geocodeAdresse(adresse) {
+  try {
+    const url = `https://api.openrouteservice.org/geocode/search?api_key=${ORS_KEY}&text=${encodeURIComponent(adresse)}&boundary.country=BE`;
+    const r = await fetch(url);
+    const data = await r.json();
+    if (!data.features?.length) return null;
+
+    const [lon, lat] = data.features[0].geometry.coordinates;
+    window.lastGeocodeClient = { lat, lon };
+    return { lat, lon };
+  } catch (e) {
+    console.error("Erreur ORS:", e);
+    return null;
+  }
 }
 
-function generateDailySlots(dureeMin) {
-  const incr = 30;
-  const result = [];
-  for (let h = START_HOUR; h < END_HOUR; h++) {
-    const m1 = h * 60;
-    const m2 = h * 60 + incr;
-    if (m1 + dureeMin <= END_HOUR * 60) result.push(m1);
-    if (m2 + dureeMin <= END_HOUR * 60) result.push(m2);
+// ======================================================
+// DISTANCE GPS ORS
+// ======================================================
+async function distanceGPS(p1, p2) {
+  try {
+    const url = `https://api.openrouteservice.org/v2/matrix/driving-car`;
+    const body = {
+      locations: [
+        [p1.lon, p1.lat],
+        [p2.lon, p2.lat]
+      ],
+      metrics: ["distance"]
+    };
+
+    const r = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Authorization": ORS_KEY,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(body)
+    });
+
+    const data = await r.json();
+    if (!data.distances) return 999;
+
+    const meters = data.distances[0][1];
+    return meters / 1000; // km
+  } catch (e) {
+    console.error("Erreur distanceGPS", e);
+    return 999;
   }
-  return result;
 }
 
+// ======================================================
+// FIREBASE — RÉCUPÉRER RÉSERVATIONS DU JOUR
+// ======================================================
+async function getReservations(date) {
+  return new Promise(async (resolve) => {
+    const r = window.firebaseRef(window.db, "reservations");
+    const snap = await window.firebaseGet(r);
 
-// =========================
-// FORMAT DATE FIREBASE
-// =========================
-function normalizeDate(d) {
-  if (!d) return "";
-  if (d.includes("/")) {
-    const [jj, mm, yyyy] = d.split("/");
-    return `${yyyy}-${mm}-${jj}`;
-  }
-  return d;
-}
+    const lista = [];
+    snap.forEach(child => {
+      const d = child.val();
+      if (d.date === date) lista.push(d);
+    });
 
-
-// =========================
-// ECONOMIES
-// =========================
-//
-// Règles :
-// - S'il n'y a AUCUN RDV ce jour-là → camion à Sprimont
-//   → optimisé si client ≤ 20 km de Sprimont
-// - S'il y a des RDV :
-//   → pour CHAQUE mission du jour, on regarde si le créneau est
-//      • juste AVANT la mission (slotEnd == start)
-//      • ou juste APRÈS la mission (slotStart == end)
-//      • ET si le client est à ≤ 20km de cette mission
-//   → si OUI pour AU MOINS UNE mission : créneau optimisé
-// - Le montant de l'économie = distance Sprimont → client × 0,5 €/km
-//
-function computeBonus(minute, dureeMin, reservations, cpUser) {
-  let bonus = 0, ecoKm = 0, ecoEuro = 0;
-
-  if (!cpUser || typeof communes === "undefined") {
-    return { bonus, ecoKm, ecoEuro };
-  }
-
-  const communeUser = communes.find(c => String(c.cp) === String(cpUser));
-  if (!communeUser) {
-    return { bonus, ecoKm, ecoEuro };
-  }
-
-  const distUser = communeUser.distance || 0;
-
-  // 🔹 CAS 1 : AUCUN RDV → camion à Sprimont
-  if (!reservations.length) {
-    if (distUser <= 20) {
-      ecoKm   = distUser;
-      ecoEuro = ecoKm * PRIX_KM;
-      bonus   = -ecoEuro;
-    }
-    return { bonus, ecoKm, ecoEuro };
-  }
-
-  // 🔹 CAS 2 : RDV existants → on teste tous les RDV du jour
-  const slotStart = minute;
-  const slotEnd   = minute + dureeMin;
-  let optimisable = false;
-
-  for (const r of reservations) {
-    if (!r.start || !r.end || !r.cp) continue;
-    // 👉 PATCH TEMPORAIRE
-// Si une réservation n'a pas de CP, on assume SPRIMONT (4140)
-if (!r.cp) {
-  r.cp = "4140";
-}
-
-
-
-    const communeRes = communes.find(c => String(c.cp) === String(r.cp));
-    if (!communeRes) continue;
-
-    const distRes = communeRes.distance || 0;
-    const rayonOk = Math.abs(distUser - distRes) <= 20; // rayon 20 km
-    if (!rayonOk) continue;
-
-    const rdvStart = toMinutes(r.start);
-    const rdvEnd   = toMinutes(r.end);
-
-    const adjacentApres  = (slotStart === rdvEnd);       // créneau juste après RDV
-    const adjacentAvant  = (slotEnd   === rdvStart);     // créneau juste avant RDV
-
-    if (adjacentAvant || adjacentApres) {
-      optimisable = true;
-      break;
-    }
-  }
-
-  if (!optimisable) {
-    return { bonus, ecoKm, ecoEuro };
-  }
-
-  // 🔹 Calcul de l'économie (toujours vs Sprimont → client)
-  ecoKm   = distUser;
-  ecoEuro = ecoKm * PRIX_KM;
-  bonus   = -ecoEuro;
-
-  return { bonus, ecoKm, ecoEuro };
-}
-
-
-// =========================
-// FIREBASE
-// =========================
-async function getReservedDataForDate(date) {
-  const db = window.db;
-  if (!db) return { occupied: [], reservations: [] };
-
-  const ref = window.firebaseRef(db, "reservations");
-  const q = window.firebaseQuery(
-    ref,
-    window.firebaseOrderByChild("date"),
-    window.firebaseStartAt(date),
-    window.firebaseEndAt(date)
-  );
-
-  const snap = await window.firebaseGet(q);
-  if (!snap.exists()) return { occupied: [], reservations: [] };
-
-  const occupied = [];
-  const reservations = [];
-
-  snap.forEach(child => {
-    const d = child.val();
-    if (normalizeDate(d.date) !== date) return;
-    reservations.push(d);
-
-    if (!d.start || !d.end) return;
-    const s = toMinutes(d.start);
-    const e = toMinutes(d.end);
-    for (let m = s; m < e; m += 30) {
-      occupied.push(m);
-    }
+    resolve(lista);
   });
-
-  return { occupied, reservations };
 }
 
+// ======================================================
+// GÉNÉRATION DES SLOTS
+// ======================================================
+function generateSlots(duree) {
+  const list = [];
+  for (let t = START; t <= END; t += INCR) {
+    if (t + duree <= END + 1) list.push(t);
+  }
+  return list;
+}
 
-// =========================
-// AFFICHAGE DES CRÉNEAUX
-// =========================
+// ======================================================
+// AFFICHAGE DES CRÉNEAUX — MOTEUR PRINCIPAL
+// ======================================================
 async function updateSlotsUI() {
-  const dateEl   = document.getElementById("date");
-  const cpEl     = document.getElementById("cp");
-  const typeEl   = document.getElementById("form-type"); // "oneShot" / "simple" / "double"
-  const extraEl  = document.getElementById("extra30");
-  const wrapper  = document.getElementById("slots-wrapper");
+  const dateEl = document.getElementById("date");
+  const cpEl   = document.getElementById("cp");
+  const comEl  = document.getElementById("commune");
+  const adrEl  = document.getElementById("adresse");
+  const typeEl = document.getElementById("form-type");
+  const wrapper = document.getElementById("slots-wrapper");
   const slotsDiv = document.getElementById("slots");
-  const slotField= document.getElementById("slot");
+  const msg = document.getElementById("msg-slot");
+  const slotHidden = document.getElementById("slot");
 
-  if (!dateEl || !slotsDiv) return;
+  slotsDiv.innerHTML = "";
+  slotHidden.value = "";
+  wrapper.classList.add("hidden");
 
-  const date = dateEl.value;
-  if (!date) {
-    if (wrapper) wrapper.classList.add("hidden");
+  if (!dateEl.value || !cpEl.value || !comEl.value || !adrEl.value) return;
+
+  const adresse = `${adrEl.value}, ${cpEl.value} ${comEl.value}, Belgique`;
+  const coordsClient = await geocodeAdresse(adresse);
+  if (!coordsClient) {
+    wrapper.classList.remove("hidden");
+    msg.textContent = "Adresse introuvable.";
     return;
   }
 
-  if (wrapper) wrapper.classList.remove("hidden");
-  slotsDiv.innerHTML = "";
-  if (slotField) slotField.value = "";
+  window.coordsClient = coordsClient;
 
-  const { occupied, reservations } = await getReservedDataForDate(date);
+  const reservations = await getReservations(dateEl.value);
 
-  // Durée de la mission selon type
-  let dureeMin = 30; // oneShot de base
-  const type = typeEl?.value;
+  // DÉTERMINATION DE LA DURÉE
+  let duree;
+  if (typeEl.value === "oneShot") duree = 30;
+  else if (typeEl.value === "simple") duree = 60;
+  else if (typeEl.value === "double") duree = 90;
+  if (document.getElementById("extra30")?.checked) duree += 30;
 
-  if (type === "simple") dureeMin = 60;
-  if (type === "double") dureeMin = 120;
-  // oneShot reste 30
-  if (extraEl?.checked) {
-    dureeMin += 30;
-  }
+  const allSlots = generateSlots(duree);
 
-  const allSlots = generateDailySlots(dureeMin);
-  const cpUser   = cpEl?.value;
+  wrapper.classList.remove("hidden");
+  msg.textContent = "Choisissez un créneau :";
 
-  const today  = new Date().toISOString().slice(0, 10);
-  const now    = new Date();
-  const nowMin = now.getHours() * 60 + now.getMinutes();
+  const today = new Date().toISOString().slice(0, 10);
+  const nowMin = new Date().getHours() * 60 + new Date().getMinutes();
 
-  allSlots.forEach(minute => {
-    const slotStart = minute;
-    const slotEnd   = minute + dureeMin;
+  const slotsAff = [];
 
-    // ⛔ Ne pas montrer les créneaux dans le passé (si même jour)
-    if (date === today && slotStart < nowMin + 15) {
-      return;
-    }
+  for (const start of allSlots) {
 
-    // ⛔ Ne pas proposer de créneau qui chevauche une réservation existante
-    let chevauche = false;
-    for (let m = slotStart; m < slotEnd; m += 30) {
-      if (occupied.includes(m)) {
-        chevauche = true;
+    if (dateEl.value === today && start < nowMin + 15) continue;
+
+    const end = start + duree;
+    let interdit = false;
+    let optim = false;
+    let extra = false;
+    let ecoEuro = 0;
+
+    for (const r of reservations) {
+      const rStart = toMin(r.start);
+      const rEnd   = toMin(r.end);
+
+      const dist = await distanceGPS(coordsClient, r.coords || DEPOT);
+
+      const tampon = dist < RAYON_EXTRA ? TAMPON_5KM : TAMPON_10KM;
+
+      if (end > rStart - tampon && start < rEnd + tampon) {
+        interdit = true;
         break;
       }
+
+      // OPTIMISATION 10 KM
+      if (dist <= RAYON_OPTIM) {
+        const adjacent = (start >= rEnd && start <= rEnd + tampon) ||
+                         (end <= rStart && end >= rStart - tampon);
+        if (adjacent) {
+          optim = true;
+          ecoEuro = (await distanceGPS(DEPOT, coordsClient)) * 0.5;
+        }
+      }
+
+      // EXTRA <5 KM
+      if (dist <= RAYON_EXTRA) {
+        extra = true;
+      }
     }
-    if (chevauche) return;
 
-    // Calcul optimisation
-    const { bonus, ecoKm, ecoEuro } = computeBonus(slotStart, dureeMin, reservations, cpUser);
+    if (interdit) continue;
 
-    const label = labelFromMinutes(slotStart, dureeMin);
-    const btn   = document.createElement("button");
+    slotsAff.push({ start, end, optim, extra, ecoEuro });
+  }
+
+  slotsAff.sort((a, b) => (b.optim ? 1 : 0) - (a.optim ? 1 : 0));
+
+  slotsAff.forEach((slot) => {
+
+    const btn = document.createElement("button");
+    btn.type = "button";
     btn.className = "slot-btn";
-    btn.textContent = label;
+    btn.textContent = `${fromMin(slot.start)} – ${fromMin(slot.end)}`;
 
-    // 🟩 Créneau optimisé
-    if (bonus < 0) {
+    if (slot.extra) {
+      btn.classList.add("slot-extra");
+      btn.innerHTML = `<div class="slot-banner-extra">EXTRA (<5 km)</div>` + btn.textContent;
+    }
+
+    if (slot.optim) {
       btn.classList.add("slot-optimise");
-      const badge = document.createElement("div");
-      badge.className = "badge-opt";
-      badge.textContent = `Optimisé = ${ecoEuro.toFixed(1)}€`;
-      btn.appendChild(badge);
+      btn.innerHTML = `<div class="slot-banner-optim">OPTIMISÉ • ${slot.ecoEuro.toFixed(1)} €</div>` + btn.textContent;
     }
 
     btn.onclick = () => {
-      if (slotField) slotField.value = label;
       document.querySelectorAll(".slot-btn").forEach(b => b.classList.remove("selected"));
       btn.classList.add("selected");
-
-      if (window.onCreneauSelected) {
-        // tu pourras simplifier le message côté page (One Shot / Double)
-        window.onCreneauSelected(bonus, ecoKm, ecoEuro);
-      }
+      slotHidden.value = `${fromMin(slot.start)} – ${fromMin(slot.end)}`;
     };
 
     slotsDiv.appendChild(btn);
   });
+
+  if (!slotsAff.length) msg.textContent = "Aucun créneau compatible.";
 }
 
-
-// =========================
+// ======================================================
 // INIT LISTENERS
-// =========================
+// ======================================================
 document.addEventListener("DOMContentLoaded", () => {
-  document.getElementById("date")?.addEventListener("input", updateSlotsUI);
-  document.getElementById("cp")?.addEventListener("input", updateSlotsUI);
-  document.getElementById("extra30")?.addEventListener("change", updateSlotsUI);
+  ["date", "cp", "commune", "adresse", "extra30"].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener("input", updateSlotsUI);
+  });
 });
+
+// Export
+window.updateSlotsUI = updateSlotsUI;
+

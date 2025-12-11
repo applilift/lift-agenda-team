@@ -5,490 +5,216 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Réservation One Shot</title>
 
-  <!-- Ton thème client existant -->
   <link rel="stylesheet" href="../css/theme_client.css" />
 
   <style>
     .slots-wrapper.hidden { display: none; }
-    #slots { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+    #slots { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
 
     .slot-btn {
-      padding: 8px 12px;
-      background: #eee;
+      padding: 10px 14px;
       border-radius: 6px;
       border: 1px solid #ccc;
+      background: #eee;
       cursor: pointer;
-      transition: .2s;
+      transition: 0.2s;
       position: relative;
-      min-width: 120px;
-      text-align: left;
     }
 
     .slot-btn:hover { background: #ddd; }
-
     .slot-btn.selected {
       background: #c3e8ff;
       border-color: #1e90ff;
       font-weight: 600;
     }
 
+    /* Optimisé */
     .slot-optimise {
-      border-color: #2ecc71;
-      background: #e9f9f0;
+      background: #d9ffe0 !important;
+      border-color: #32a852 !important;
     }
 
+    /* EXTRA */
     .slot-extra {
-      border-color: #f39c12;
-      background: #fff5e6;
+      background: #ffe9c7 !important;
+      border-color: #e29a00 !important;
     }
 
-    .slot-banner-optim,
     .slot-banner-extra {
       font-size: 11px;
-      font-weight: 600;
-      color: #fff;
-      padding: 2px 6px;
+      background: #e29a00;
+      color: white;
+      padding: 2px 4px;
       border-radius: 4px;
       margin-bottom: 3px;
-      display: inline-block;
     }
 
     .slot-banner-optim {
-      background: #2ecc71;
-    }
-
-    .slot-banner-extra {
-      background: #f39c12;
+      font-size: 11px;
+      background: #32a852;
+      color: white;
+      padding: 2px 4px;
+      border-radius: 4px;
+      margin-bottom: 3px;
     }
   </style>
 </head>
 
 <body>
-  <div class="page-container">
-    <h1>Réservation One Shot</h1>
-    <hr />
-
-    <form id="form-one-shot" novalidate>
-      <!-- Date -->
-      <label for="date">Date souhaitée :</label>
-      <input type="date" id="date" required />
-
-      <!-- Code postal -->
-      <label for="cp">Code postal :</label>
-      <input type="text" id="cp" maxlength="4" />
-
-      <!-- Commune -->
-      <label for="commune">Commune :</label>
-      <input type="text" id="commune" required />
-
-      <!-- Adresse -->
-      <label for="adresse">Adresse complète :</label>
-      <input type="text" id="adresse" placeholder="Rue + n°" required />
-
-      <!-- Contact -->
-      <label for="telephone">Téléphone :</label>
-      <input type="tel" id="telephone" required />
-
-      <label for="email">E-mail :</label>
-      <input type="email" id="email" required />
-
-      <label for="note">Note complémentaire :</label>
-      <textarea id="note" rows="2"></textarea>
-
-      <hr />
-
-      <h2>Créneaux disponibles</h2>
-      <div id="slots-wrapper" class="slots-wrapper hidden">
-        <p id="msg-slot"></p>
-        <div id="slots"></div>
-      </div>
-
-      <input type="hidden" id="slot" required />
-
-      <hr />
-
-      <button type="button" id="btn-reserver" class="btn-primary">
-        Réserver ce créneau
-      </button>
-    </form>
-  </div>
-
-  <script src="https://js.stripe.com/v3/"></script>
-
-  <script type="module">
-    /* ------------------------------------------------------------------
-       Firebase
-    ------------------------------------------------------------------ */
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-    import {
-      getDatabase,
-      ref,
-      get,
-      push
-    } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyC5Rly--5aw3vSEuhRcyZxzD5fg1JJowbE",
-      authDomain: "lift-agenda-app.firebaseapp.com",
-      databaseURL: "https://lift-agenda-app-default-rtdb.europe-west1.firebasedatabase.app",
-      projectId: "lift-agenda-app",
-      storageBucket: "lift-agenda-app.firebasestorage.app",
-      messagingSenderId: "162981688841",
-      appId: "1:162981688841:web:8ceee20cd7500aedb1ead8"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const db  = getDatabase(app);
-
-    /* ------------------------------------------------------------------
-       ORS — géocodage & distances
-    ------------------------------------------------------------------ */
-    const ORS_KEY = "eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6IjIzMWFmY2M1YzhiOTQ4YjlhYWY1ZTE2YWQ5NDhkZWY5IiwiaCI6Im11cm11cjY0In0=";
-
-    // Dépôt Sprimont (Rue Mazeure 30)
-    const DEPOT_SPRIMONT = { lat: 50.510145, lng: 5.676349 };
-
-    async function geocodeAdresse(adresse) {
-      try {
-        const url = `https://api.openrouteservice.org/geocode/search?api_key=${ORS_KEY}&text=${encodeURIComponent(adresse)}&boundary.country=BE&size=1`;
-        const res = await fetch(url);
-        const data = await res.json();
-        const feat = data.features?.[0];
-        if (!feat) return null;
-        return {
-          lat: feat.geometry.coordinates[1],
-          lng: feat.geometry.coordinates[0],
-        };
-      } catch (e) {
-        console.error("Erreur ORS geocode:", e);
-        return null;
-      }
-    }
-
-    function distanceKm(a, b) {
-      const R = 6371;
-      const toRad = d => d * Math.PI / 180;
-      const dLat = toRad(b.lat - a.lat);
-      const dLng = toRad(b.lng - a.lng);
-      const lat1 = toRad(a.lat);
-      const lat2 = toRad(b.lat);
-      const h = Math.sin(dLat / 2) ** 2 +
-                Math.cos(lat1) * Math.cos(lat2) *
-                Math.sin(dLng / 2) ** 2;
-      return 2 * R * Math.asin(Math.sqrt(h));
-    }
-
-    /* ------------------------------------------------------------------
-       Chargement des réservations d'un jour
-       (anciennes sans coords = bloquent le temps avec tampon 30 min)
-    ------------------------------------------------------------------ */
-    async function getReservationsForDate(dateStr) {
-      const resRef = ref(db, "reservations");
-      const snap = await get(resRef);
-      if (!snap.exists()) return [];
-
-      const all = snap.val();
-      const list = [];
-
-      for (const key in all) {
-        const r = all[key];
-        if (r.date !== dateStr) continue;
-        if (!r.start || !r.end) continue;
-        list.push(r);
-      }
-      return list;
-    }
-
-    /* ------------------------------------------------------------------
-       Règles métier
-    ------------------------------------------------------------------ */
-    const DUREE_MISSION = 30;          // durée One Shot = 30 min
-    const RAYON_OPTIM   = 10;          // optimisé si <= 10 km
-    const LIMITE_PROCHE = 5;           // très proche si < 5 km
-    const TAMPON_PROCHE = 15;          // minutes si < 5 km
-    const TAMPON_LOIN   = 30;          // minutes sinon
-
-    const HEURE_DEBUT   = 8 * 60;      // 08h00
-    const HEURE_LAST    = 17 * 60 + 30;// dernier début = 17h30
-
-    /* ------------------------------------------------------------------
-       Helpers temps
-    ------------------------------------------------------------------ */
-    function minutesToHHMM(m) {
-      const h  = Math.floor(m / 60);
-      const mm = m % 60;
-      return `${String(h).padStart(2,"0")}:${String(mm).padStart(2,"0")}`;
-    }
-
-    function HHMMToMinutes(hhmm) {
-      const [h, m] = hhmm.split(":").map(Number);
-      return h * 60 + m;
-    }
-
-    /* ------------------------------------------------------------------
-       Chevauchement avec tampon
-    ------------------------------------------------------------------ */
-    function chevaucheAvecTampon(slotStart, slotEnd, missionStart, missionEnd, tampon) {
-      return !(
-        slotEnd + tampon   <= missionStart ||
-        slotStart >= missionEnd + tampon
-      );
-    }
-
-    /* ------------------------------------------------------------------
-       Sélecteurs DOM
-    ------------------------------------------------------------------ */
-    const dateEl     = document.getElementById("date");
-    const cpEl       = document.getElementById("cp");
-    const communeEl  = document.getElementById("commune");
-    const addrEl     = document.getElementById("adresse");
-    const wrapper    = document.getElementById("slots-wrapper");
-    const slotsDiv   = document.getElementById("slots");
-    const msgSlot    = document.getElementById("msg-slot");
-    const slotHidden = document.getElementById("slot");
-
-    let debounceTimer = null;
-    function scheduleUpdateSlots() {
-      if (debounceTimer) clearTimeout(debounceTimer);
-      debounceTimer = setTimeout(updateSlotsUI, 400);
-    }
-
-    /* ------------------------------------------------------------------
-       Moteur principal : génération des créneaux
-    ------------------------------------------------------------------ */
-    async function updateSlotsUI() {
-      slotsDiv.innerHTML = "";
-      slotHidden.value = "";
-      wrapper.classList.add("hidden");
-      msgSlot.textContent = "";
-
-      const date    = dateEl.value;
-      const cp      = cpEl.value.trim();
-      const commune = communeEl.value.trim();
-      const adresse = addrEl.value.trim();
-
-      if (!date || !commune || !adresse) return;
-
-      const fullAdresse = cp
-        ? `${adresse}, ${cp} ${commune}, Belgique`
-        : `${adresse}, ${commune}, Belgique`;
-
-      const coordsClient = await geocodeAdresse(fullAdresse);
-      if (!coordsClient) {
-        wrapper.classList.remove("hidden");
-        msgSlot.textContent = "Adresse introuvable. Vérifiez l'écriture.";
-        return;
-      }
-
-      const kmDepotClient = distanceKm(DEPOT_SPRIMONT, coordsClient);
-      const econStandard  = kmDepotClient * 0.5; // € (marketing)
-
-      console.log("Client :", fullAdresse, coordsClient, "km dépôt:", kmDepotClient.toFixed(2));
-
-      const missions = await getReservationsForDate(date);
-      const missionsMinutes = missions.map(m => ({
-        start: HHMMToMinutes(m.start),
-        end:   HHMMToMinutes(m.end),
-        coords: m.coords || null,
-        adresse: m.adresse || "",
-      }));
-
-      // Créneaux candidats : départ tous les 15 min
-      const slots = [];
-      for (let start = HEURE_DEBUT; start <= HEURE_LAST; start += 15) {
-        const end = start + DUREE_MISSION;
-        slots.push({ start, end });
-      }
-
-      const today  = new Date().toISOString().slice(0,10);
-      const now    = new Date();
-      const nowMin = now.getHours()*60 + now.getMinutes();
-
-      const results = [];
-
-      for (const s of slots) {
-        // pas de créneaux dans le passé
-        if (date === today && s.start < nowMin + 15) continue;
-
-        let interdit = false;
-        let minDist  = Infinity;
-        let minDistSous5 = Infinity;
-
-        for (const mission of missionsMinutes) {
-          let tampon = TAMPON_LOIN;
-
-          if (mission.coords) {
-            const dKm = distanceKm(coordsClient, mission.coords);
-            if (dKm < minDist) minDist = dKm;
-            if (dKm < LIMITE_PROCHE && dKm < minDistSous5) minDistSous5 = dKm;
-            if (dKm < LIMITE_PROCHE) {
-              tampon = TAMPON_PROCHE;
-            }
-          }
-
-          // même si pas de coords, on bloque au moins avec tampon 30 min
-          if (chevaucheAvecTampon(s.start, s.end, mission.start, mission.end, tampon)) {
-            interdit = true;
-            break;
-          }
-        }
-
-        if (interdit) continue;
-
-        const isExtra = minDistSous5 <= LIMITE_PROCHE; // <5 km
-        const isOptim = !isExtra && (minDist <= RAYON_OPTIM); // <=10 km
-
-        let typeOpt   = "normal";
-        let econAff   = 0;
-        let sortBonus = 0;
-
-        if (isExtra) {
-          // EXTRA optimisé : +40%
-          econAff   = econStandard * 1.4;
-          typeOpt   = "extra";
-          sortBonus = -2;
-        } else if (isOptim) {
-          econAff   = econStandard;
-          typeOpt   = "optim";
-          sortBonus = -1;
-        }
-
-        results.push({
-          ...s,
-          labelHeure: `${minutesToHHMM(s.start)} – ${minutesToHHMM(s.end)}`,
-          typeOpt,
-          econAff,
-          sortBonus
-        });
-      }
-
-      if (!results.length) {
-        wrapper.classList.remove("hidden");
-        msgSlot.textContent = "Aucun créneau disponible pour cette date.";
-        return;
-      }
-
-      // EXTRA d'abord, puis OPTIM, puis normal, puis par heure
-      results.sort((a, b) => {
-        if (a.sortBonus !== b.sortBonus) return a.sortBonus - b.sortBonus;
-        return a.start - b.start;
-      });
-
-      wrapper.classList.remove("hidden");
-      msgSlot.textContent = "Sélectionnez un créneau :";
-
-      results.forEach(r => {
-        const btn = document.createElement("button");
-        btn.type = "button";
-        btn.className = "slot-btn";
-
-        let bandeau = "";
-        if (r.typeOpt === "extra") {
-          bandeau = `<div class="slot-banner-extra">🔶 EXTRA optimisé – ${r.econAff.toFixed(1)} €</div>`;
-          btn.classList.add("slot-extra");
-        } else if (r.typeOpt === "optim") {
-          bandeau = `<div class="slot-banner-optim">🟢 Optimisé – ${r.econAff.toFixed(1)} €</div>`;
-          btn.classList.add("slot-optimise");
-        }
-
-        btn.innerHTML = `
-          ${bandeau}
-          <div>${r.labelHeure}</div>
-        `;
-
-        btn.onclick = () => {
-          document.querySelectorAll(".slot-btn").forEach(b => b.classList.remove("selected"));
-          btn.classList.add("selected");
-          slotHidden.value = r.labelHeure;
-        };
-
-        slotsDiv.appendChild(btn);
-      });
-    }
-
-    /* ------------------------------------------------------------------
-       Prix One Shot
-    ------------------------------------------------------------------ */
-    function calculPrix(distanceKm) {
-      const base     = 85;
-      const variable = distanceKm * 0.5;
-      return Math.round((base + variable) * 100) / 100;
-    }
-
-    /* ------------------------------------------------------------------
-       Listeners pour recalculer les créneaux
-    ------------------------------------------------------------------ */
-    dateEl.addEventListener("change", scheduleUpdateSlots);
-    cpEl.addEventListener("input", scheduleUpdateSlots);
-    communeEl.addEventListener("input", scheduleUpdateSlots);
-    addrEl.addEventListener("input", scheduleUpdateSlots);
-
-    /* ------------------------------------------------------------------
-       Enregistrement de la réservation
-    ------------------------------------------------------------------ */
-    document.getElementById("btn-reserver").addEventListener("click", async () => {
-      const telephoneEl = document.getElementById("telephone");
-      const emailEl     = document.getElementById("email");
-      const noteEl      = document.getElementById("note");
-
-      if (!dateEl.value || !communeEl.value || !addrEl.value ||
-          !telephoneEl.value || !emailEl.value) {
-        alert("Merci de compléter tous les champs obligatoires.");
-        return;
-      }
-
-      if (!slotHidden.value) {
-        alert("Veuillez sélectionner un créneau.");
-        return;
-      }
-
-      const cp      = cpEl.value.trim();
-      const commune = communeEl.value.trim();
-      const adresse = addrEl.value.trim();
-
-      const fullAdresse = cp
-        ? `${adresse}, ${cp} ${commune}, Belgique`
-        : `${adresse}, ${commune}, Belgique`;
-
-      const coords = await geocodeAdresse(fullAdresse);
-      if (!coords) {
-        alert("Adresse invalide. Impossible d'enregistrer.");
-        return;
-      }
-
-      const km   = distanceKm(DEPOT_SPRIMONT, coords);
-      const prix = calculPrix(km);
-
-      const [hStart, hEnd] = slotHidden.value.split("–").map(s => s.trim());
-      const start = hStart;
-      const end   = hEnd;
-
-      const reservation = {
-        type: "LFT",
-        subType: "ONE_SHOT",
-        date: dateEl.value,
-        start,
-        end,
-        adresse: fullAdresse.toUpperCase(),
-        coords,
-        clientPhone: telephoneEl.value,
-        clientEmail: emailEl.value,
-        note: noteEl.value || "",
-        prix,
-        createdAt: new Date().toISOString()
-      };
-
-      console.log("🟦 Nouvelle réservation One Shot :", reservation);
-
-      await push(ref(db, "reservations"), reservation);
-
-      alert(`Réservation enregistrée ! Prix estimé : ${prix.toFixed(2)} €`);
-      // Éventuelle redirection :
-      // window.location.href = "/merci.html";
-    });
-  </script>
+
+<div class="page-container">
+  <h1>Réservation One Shot</h1>
+  <hr>
+
+  <!-- ========================= FORMULAIRE ========================= -->
+  <form id="form-one-shot" novalidate>
+
+    <label>Date souhaitée :</label>
+    <input type="date" id="date" required />
+
+    <label>Code postal :</label>
+    <input type="text" id="cp" required maxlength="4" />
+
+    <label>Commune :</label>
+    <input type="text" id="commune" required />
+
+    <label>Adresse complète :</label>
+    <input type="text" id="adresse" required placeholder="Rue + numéro" />
+
+    <label>Téléphone :</label>
+    <input type="tel" id="telephone" required />
+
+    <label>E-mail :</label>
+    <input type="email" id="email" required />
+
+    <label>Note complémentaire :</label>
+    <textarea id="note" rows="2"></textarea>
+
+    <input type="hidden" id="form-type" value="oneShot" />
+    <input type="hidden" id="slot" />
+
+    <hr>
+    <h2>Créneaux disponibles</h2>
+
+    <div id="slots-wrapper" class="slots-wrapper hidden">
+      <p id="msg-slot"></p>
+      <div id="slots"></div>
+    </div>
+
+    <hr>
+
+    <button type="button" id="btn-reserver" class="btn-primary">
+      Réserver ce créneau
+    </button>
+
+  </form>
+</div>
+
+
+<!-- ========================= Firebase ========================= -->
+<script type="module">
+import {
+  initializeApp
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+
+import {
+  getDatabase,
+  ref,
+  push,
+  set
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyC5Rly--5aw3VSEuhRcyZxzD5fg1JJowbE",
+  authDomain: "lift-agenda-app.firebaseapp.com",
+  databaseURL: "https://lift-agenda-app-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "lift-agenda-app",
+  storageBucket: "lift-agenda-app.appspot.com",
+  messagingSenderId: "804813302927",
+  appId: "1:804813302927:web:cbb64d2cb41f7d4320bb22"
+};
+
+const app = initializeApp(firebaseConfig);
+const db  = getDatabase(app);
+
+// Rendre dispo au moteur slot.js
+window.db = db;
+window.firebaseRef   = ref;
+window.firebasePush  = push;
+window.firebaseSet   = set;
+
+</script>
+
+<!-- ========================= CHARGEMENT DU MOTEUR DE CRÉNEAUX ========================= -->
+<script src="js/slot.js"></script>
+
+<!-- ========================= ACTION RÉSERVER ========================= -->
+<script>
+document.getElementById("btn-reserver").onclick = async () => {
+
+  const dateEl = document.getElementById("date");
+  const cpEl   = document.getElementById("cp");
+  const comEl  = document.getElementById("commune");
+  const adrEl  = document.getElementById("adresse");
+  const telEl  = document.getElementById("telephone");
+  const mailEl = document.getElementById("email");
+  const noteEl = document.getElementById("note");
+  const slotEl = document.getElementById("slot");
+
+  if (!dateEl.value || !cpEl.value || !comEl.value || !adrEl.value || !telEl.value || !mailEl.value) {
+    alert("Merci de remplir tous les champs obligatoires.");
+    return;
+  }
+
+  if (!slotEl.value) {
+    alert("Veuillez choisir un créneau.");
+    return;
+  }
+
+  // Adresse complète
+  const fullAdresse = `${adrEl.value}, ${cpEl.value} ${comEl.value}, Belgique`;
+
+  // La géolocalisation a déjà été faite par slot.js → coordsClient global
+  if (!window.lastGeocodeClient) {
+    alert("Erreur géocodage : impossible de finaliser la réservation.");
+    return;
+  }
+
+  const coords = window.lastGeocodeClient;
+
+  // Créneau format HH:MM – HH:MM
+  const [hh1, hh2] = slotEl.value.split("–").map(s => s.trim());
+  const start = hh1;
+  const end   = hh2;
+
+  const reservation = {
+    type: "ONE_SHOT",
+    date: dateEl.value,
+    start,
+    end,
+    adresse: fullAdresse,
+    coords,
+    clientPhone: telEl.value,
+    clientEmail: mailEl.value,
+    note: noteEl.value || "",
+    createdAt: new Date().toISOString()
+  };
+
+  try {
+    const resRef = window.firebaseRef(window.db, "reservations");
+    await window.firebasePush(resRef, reservation);
+    alert("Votre réservation a été enregistrée !");
+  } 
+  catch (e) {
+    console.error(e);
+    alert("Erreur lors de l'enregistrement.");
+  }
+};
+</script>
+
 </body>
 </html>
+
 
 
 
