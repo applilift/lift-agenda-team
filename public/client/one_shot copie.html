@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Réservation One Shot</title>
+
+  <!-- Même thème que le reste du site -->
+  <link rel="stylesheet" href="../css/theme_client.css" />
+
+  <style>
+    .slots-wrapper.hidden { display: none; }
+    #slots {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    .slot-btn {
+      padding: 10px 14px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      background: #eee;
+      cursor: pointer;
+      transition: 0.2s;
+      position: relative;
+      font-size: 14px;
+    }
+    .slot-btn:hover {
+      background: #ddd;
+    }
+    .slot-btn.selected {
+      background: #c3e8ff;
+      border-color: #1e90ff;
+      font-weight: 600;
+    }
+
+    /* Créneaux optimisés */
+    .slot-optimise {
+      background: #d9ffe0 !important;
+      border-color: #32a852 !important;
+    }
+    .slot-extra {
+      background: #ffe9c7 !important;
+      border-color: #e29a00 !important;
+    }
+    .slot-banner-extra,
+    .slot-banner-optim {
+      font-size: 11px;
+      color: #fff;
+      padding: 2px 4px;
+      border-radius: 4px;
+      margin-bottom: 3px;
+      display: inline-block;
+    }
+    .slot-banner-extra {
+      background: #e29a00;
+    }
+    .slot-banner-optim {
+      background: #32a852;
+    }
+    .input-error {
+      border-color: #d9534f !important;
+      background: #ffe5e5 !important;
+    }
+  </style>
+</head>
+
+<body>
+<div class="page-container">
+  <h1>Réservation One Shot</h1>
+  <hr />
+
+  <form id="form-one-shot" novalidate>
+
+    <label for="date">Date souhaitée :</label>
+    <input type="date" id="date" required />
+
+    <label for="cp">Code postal :</label>
+    <input type="text" id="cp" maxlength="4" required />
+
+    <label for="commune">Commune :</label>
+    <input type="text" id="commune" required />
+    <div id="cpcom-suggestions" class="adresse-suggestions"></div>
+    <div id="cpcom-status" style="font-size:13px;margin-top:4px;color:#666;"></div>
+
+
+    <label for="adresse">Adresse complète :</label>
+    <input type="text" id="adresse" placeholder="Rue + numéro" required />
+
+    <label for="telephone">Téléphone :</label>
+    <input type="tel" id="telephone" required />
+
+    <label for="email">E-mail :</label>
+    <input type="email" id="email" required />
+
+    <label for="note">Note complémentaire :</label>
+    <textarea id="note" rows="2"></textarea>
+
+    <!-- Type de formulaire (ici One Shot fixe 30min) -->
+    <input type="hidden" id="form-type" value="oneShot" />
+    <!-- Slot choisi -->
+    <input type="hidden" id="slot" />
+
+    <hr />
+    <h2>Créneaux disponibles</h2>
+
+    <div id="slots-wrapper" class="slots-wrapper hidden">
+      <p id="msg-slot"></p>
+      <div id="slots"></div>
+    </div>
+
+    <hr />
+
+    <button type="button" id="btn-reserver" class="btn-primary">
+      Réserver ce créneau
+    </button>
+  </form>
+</div>
+
+<!-- ========================= Firebase (module) ========================= -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import {
+  getDatabase,
+  ref,
+  push,
+  get,
+  query,
+  orderByChild,
+  equalTo,
+  startAt,
+  } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyC5Rly--5aw3VSEuhRcyZxzD5fg1JJowbE",
+    authDomain: "lift-agenda-app.firebaseapp.com",
+    databaseURL: "https://lift-agenda-app-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "lift-agenda-app",
+    storageBucket: "lift-agenda-app.appspot.com",
+    messagingSenderId: "804813302927",
+    appId: "1:804813302927:web:cbb64d2cb41f7d4320bb22"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db  = getDatabase(app);
+
+  // Exposer au global pour slot.js
+  window.db           = db;
+  window.firebaseRef  = ref;
+  window.firebasePush = push;
+  window.firebaseGet  = get;
+  window.firebaseQuery = query;
+  window.firebaseOrderByChild = orderByChild;
+  window.firebaseEqualTo = equalTo;
+  window.firebaseStartAt = startAt;
+
+  
+</script>
+
+<!-- ========================= MOTEUR DE CRÉNEAUX ========================= -->
+<script src="js/slot.js"></script>
+
+<!-- ========================= ACTION : RÉSERVER ========================= -->
+<script>
+  document.getElementById("btn-reserver").onclick = async () => {
+    const dateEl = document.getElementById("date");
+    const cpEl   = document.getElementById("cp");
+    const comEl  = document.getElementById("commune");
+    const adrEl  = document.getElementById("adresse");
+    const telEl  = document.getElementById("telephone");
+    const mailEl = document.getElementById("email");
+    const noteEl = document.getElementById("note");
+    const slotEl = document.getElementById("slot");
+
+    // Validation basique
+    if (!dateEl.value || !cpEl.value || !comEl.value || !adrEl.value || !telEl.value || !mailEl.value) {
+      alert("Merci de compléter tous les champs obligatoires.");
+      return;
+    }
+    if (!slotEl.value) {
+      alert("Veuillez sélectionner un créneau.");
+      return;
+    }
+
+    // Coordonnées géocodées par slot.js
+    if (!window.lastGeocodeClient) {
+      alert("L'adresse n'a pas pu être vérifiée. Réessayez.");
+      return;
+    }
+
+    const fullAdresse = `${adrEl.value}, ${cpEl.value} ${comEl.value}, Belgique`;
+    const [hh1, hh2] = slotEl.value.split("–").map(s => s.trim());
+    const reservation = {
+      type: "LFT",
+      subType: "ONE_SHOT",
+      source: "CLIENT",
+      date: dateEl.value,
+      start: hh1,
+      end: hh2,
+      adresse: fullAdresse,
+      cp: cpEl.value,
+      commune: comEl.value,
+      coords: window.lastGeocodeClient,
+      clientPhone: telEl.value,
+      clientEmail: mailEl.value,
+      note: noteEl.value || "",
+      createdAt: new Date().toISOString()
+    };
+
+    try {
+      const resRef = window.firebaseRef(window.db, "reservations");
+      await window.firebasePush(resRef, reservation);
+      alert("Votre réservation a été enregistrée !");
+      // éventuel reset du formulaire
+      // document.getElementById("form-one-shot").reset();
+      // window.location.href = "...";
+    } catch (e) {
+      console.error(e);
+      alert("Erreur lors de l'enregistrement. Merci de réessayer.");
+    }
+  };
+</script>
+
+</body>
+</html>
+
+
+
+

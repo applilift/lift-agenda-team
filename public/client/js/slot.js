@@ -1,245 +1,178 @@
-console.log("🟢 slot.js chargé — GPS, optimisation 10km, tampon intelligent OK");
+console.log("🟢 slot.js — moteur de créneaux chargé");
 
-// ======================================================
-// CONFIG GÉNÉRALE
-// ======================================================
-const ORS_KEY = "5b3ce3597851110001cf6248xxxxxxxxxxxx"; // ← mets ta vraie clé ORS
-const DEPOT = { lat: 50.4871, lon: 5.6011 }; // Sprimont
-const RAYON_OPTIM = 10;     // km pour optimisation
-const RAYON_EXTRA = 5;      // km → tampon 15 min
-const TAMPON_5KM = 15;      // minutes
-const TAMPON_10KM = 30;     // minutes
-const START = 8 * 60;       // 08h00
-const END = 18 * 60;        // 18h00 — dernier début
-const INCR = 15;            // créneaux toutes les 15 minutes
+/* ================== CONFIG ================== */
 
-// ======================================================
-// OUTILS TEMPS
-// ======================================================
-function toMin(hhmm) {
-  const [h, m] = hhmm.split(":").map(Number);
+const START_HOUR = 8;
+const END_HOUR = 19;
+const SLOT_DURATION = 30;
+
+/* ================== UTILITAIRES TEMPS ================== */
+
+function toMinutes(hm) {
+  const [h, m] = hm.split(":").map(Number);
   return h * 60 + m;
 }
-function fromMin(m) {
-  return `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
+
+function format2(n) {
+  return String(n).padStart(2, "0");
 }
 
-// ======================================================
-// GÉNÉOCODAGE ORS
-// ======================================================
-async function geocodeAdresse(adresse) {
-  try {
-    const url = `https://api.openrouteservice.org/geocode/search?api_key=${ORS_KEY}&text=${encodeURIComponent(adresse)}&boundary.country=BE`;
-    const r = await fetch(url);
-    const data = await r.json();
-    if (!data.features?.length) return null;
+function labelFromMinutes(startMin) {
+  const endMin = startMin + SLOT_DURATION;
+  return (
+    `${format2(Math.floor(startMin / 60))}:${format2(startMin % 60)}–` +
+    `${format2(Math.floor(endMin / 60))}:${format2(endMin % 60)}`
+  );
+}
 
-    const [lon, lat] = data.features[0].geometry.coordinates;
-    window.lastGeocodeClient = { lat, lon };
-    return { lat, lon };
-  } catch (e) {
-    console.error("Erreur ORS:", e);
-    return null;
+function generateDailySlots() {
+  const slots = [];
+  for (let h = START_HOUR; h < END_HOUR; h++) {
+    slots.push(h * 60);
+    slots.push(h * 60 + SLOT_DURATION);
   }
+  return slots;
 }
 
-// ======================================================
-// DISTANCE GPS ORS
-// ======================================================
-async function distanceGPS(p1, p2) {
-  try {
-    const url = `https://api.openrouteservice.org/v2/matrix/driving-car`;
-    const body = {
-      locations: [
-        [p1.lon, p1.lat],
-        [p2.lon, p2.lat]
-      ],
-      metrics: ["distance"]
-    };
+/* ================== DATE ================== */
 
-    const r = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Authorization": ORS_KEY,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(body)
-    });
-
-    const data = await r.json();
-    if (!data.distances) return 999;
-
-    const meters = data.distances[0][1];
-    return meters / 1000; // km
-  } catch (e) {
-    console.error("Erreur distanceGPS", e);
-    return 999;
+function normalizeDate(d) {
+  if (!d) return "";
+  if (d.includes("/")) {
+    const [jj, mm, yyyy] = d.split("/");
+    return `${yyyy}-${mm}-${jj}`;
   }
+  return d;
 }
 
-// ======================================================
-// FIREBASE — RÉCUPÉRER RÉSERVATIONS DU JOUR
-// ======================================================
-async function getReservations(date) {
-  return new Promise(async (resolve) => {
-    const r = window.firebaseRef(window.db, "reservations");
-    const snap = await window.firebaseGet(r);
+/* ================== BONUS OPTIMISATION ================== */
+/* Adjacent + distance <= 10km (si communes dispo) */
 
-    const lista = [];
-    snap.forEach(child => {
-      const d = child.val();
-      if (d.date === date) lista.push(d);
-    });
+function computeBonus(minute, occupiedMinutes, reservationsOfDay, userCP) {
+  if (!userCP || typeof communes === "undefined") return 0;
 
-    resolve(lista);
+  const isAdjacent =
+    occupiedMinutes.includes(minute - SLOT_DURATION) ||
+    occupiedMinutes.includes(minute + SLOT_DURATION);
+
+  if (!isAdjacent) return 0;
+
+  const communeUser = communes.find(c => String(c.cp) === String(userCP));
+  if (!communeUser) return 0;
+
+  for (const r of reservationsOfDay) {
+    if (!r.cp) continue;
+
+    const communeRes = communes.find(c => String(c.cp) === String(r.cp));
+    if (!communeRes) continue;
+
+    if (Math.abs(communeUser.distance - communeRes.distance) <= 10) {
+      return -5; // slot optimisé
+    }
+  }
+
+  return 0;
+}
+
+/* ================== FIREBASE ================== */
+
+async function getReservedDataForDate(date) {
+  const db = window.db;
+  if (!db) return { occupied: [], reservations: [] };
+
+  const ref = window.firebaseRef(db, "reservations");
+  const q = window.firebaseQuery(
+    ref,
+    window.firebaseOrderByChild("date"),
+    window.firebaseStartAt(date),
+    window.firebaseEndAt(date)
+  );
+
+  const snap = await window.firebaseGet(q);
+  if (!snap.exists()) return { occupied: [], reservations: [] };
+
+  const occupiedMinutes = [];
+  const reservationsOfDay = [];
+
+  snap.forEach(child => {
+    const r = child.val();
+    if (normalizeDate(r.date) !== date) return;
+
+    reservationsOfDay.push(r);
+
+    if (!r.start || !r.end) return;
+
+    const startMin = toMinutes(r.start);
+    const endMin = toMinutes(r.end);
+
+    for (let m = startMin; m < endMin; m += SLOT_DURATION) {
+      occupiedMinutes.push(m);
+    }
   });
+
+  return { occupied: occupiedMinutes, reservations: reservationsOfDay };
 }
 
-// ======================================================
-// GÉNÉRATION DES SLOTS
-// ======================================================
-function generateSlots(duree) {
-  const list = [];
-  for (let t = START; t <= END; t += INCR) {
-    if (t + duree <= END + 1) list.push(t);
-  }
-  return list;
-}
+/* ================== UI CRÉNEAUX ================== */
 
-// ======================================================
-// AFFICHAGE DES CRÉNEAUX — MOTEUR PRINCIPAL
-// ======================================================
 async function updateSlotsUI() {
   const dateEl = document.getElementById("date");
-  const cpEl   = document.getElementById("cp");
-  const comEl  = document.getElementById("commune");
-  const adrEl  = document.getElementById("adresse");
-  const typeEl = document.getElementById("form-type");
-  const wrapper = document.getElementById("slots-wrapper");
+  const slotField = document.getElementById("slot");
   const slotsDiv = document.getElementById("slots");
-  const msg = document.getElementById("msg-slot");
-  const slotHidden = document.getElementById("slot");
 
+  if (!dateEl || !slotField || !slotsDiv) return;
+  if (!dateEl.value) return;
+
+  slotField.value = "";
   slotsDiv.innerHTML = "";
-  slotHidden.value = "";
-  wrapper.classList.add("hidden");
 
-  if (!dateEl.value || !cpEl.value || !comEl.value || !adrEl.value) return;
+  const { occupied, reservations } =
+    await getReservedDataForDate(dateEl.value);
 
-  const adresse = `${adrEl.value}, ${cpEl.value} ${comEl.value}, Belgique`;
-  const coordsClient = await geocodeAdresse(adresse);
-  if (!coordsClient) {
-    wrapper.classList.remove("hidden");
-    msg.textContent = "Adresse introuvable.";
-    return;
-  }
+  const userCP = document.getElementById("cp")?.value;
+  const allSlots = generateDailySlots();
 
-  window.coordsClient = coordsClient;
-
-  const reservations = await getReservations(dateEl.value);
-
-  // DÉTERMINATION DE LA DURÉE
-  let duree;
-  if (typeEl.value === "oneShot") duree = 30;
-  else if (typeEl.value === "simple") duree = 60;
-  else if (typeEl.value === "double") duree = 90;
-  if (document.getElementById("extra30")?.checked) duree += 30;
-
-  const allSlots = generateSlots(duree);
-
-  wrapper.classList.remove("hidden");
-  msg.textContent = "Choisissez un créneau :";
-
-  const today = new Date().toISOString().slice(0, 10);
-  const nowMin = new Date().getHours() * 60 + new Date().getMinutes();
-
-  const slotsAff = [];
-
-  for (const start of allSlots) {
-
-    if (dateEl.value === today && start < nowMin + 15) continue;
-
-    const end = start + duree;
-    let interdit = false;
-    let optim = false;
-    let extra = false;
-    let ecoEuro = 0;
-
-    for (const r of reservations) {
-      const rStart = toMin(r.start);
-      const rEnd   = toMin(r.end);
-
-      const dist = await distanceGPS(coordsClient, r.coords || DEPOT);
-
-      const tampon = dist < RAYON_EXTRA ? TAMPON_5KM : TAMPON_10KM;
-
-      if (end > rStart - tampon && start < rEnd + tampon) {
-        interdit = true;
-        break;
-      }
-
-      // OPTIMISATION 10 KM
-      if (dist <= RAYON_OPTIM) {
-        const adjacent = (start >= rEnd && start <= rEnd + tampon) ||
-                         (end <= rStart && end >= rStart - tampon);
-        if (adjacent) {
-          optim = true;
-          ecoEuro = (await distanceGPS(DEPOT, coordsClient)) * 0.5;
-        }
-      }
-
-      // EXTRA <5 KM
-      if (dist <= RAYON_EXTRA) {
-        extra = true;
-      }
-    }
-
-    if (interdit) continue;
-
-    slotsAff.push({ start, end, optim, extra, ecoEuro });
-  }
-
-  slotsAff.sort((a, b) => (b.optim ? 1 : 0) - (a.optim ? 1 : 0));
-
-  slotsAff.forEach((slot) => {
-
+  for (const minute of allSlots) {
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className = "slot-btn";
-    btn.textContent = `${fromMin(slot.start)} – ${fromMin(slot.end)}`;
+    btn.textContent = labelFromMinutes(minute);
 
-    if (slot.extra) {
-      btn.classList.add("slot-extra");
-      btn.innerHTML = `<div class="slot-banner-extra">EXTRA (<5 km)</div>` + btn.textContent;
+    if (occupied.includes(minute)) {
+      btn.disabled = true;
+      btn.classList.add("disabled");
+    } else {
+      const bonus = computeBonus(minute, occupied, reservations, userCP);
+
+      if (bonus < 0) btn.classList.add("slot-optimise");
+
+      btn.onclick = () => {
+        document
+          .querySelectorAll(".slot-btn")
+          .forEach(b => b.classList.remove("selected"));
+
+        btn.classList.add("selected");
+        slotField.value = btn.textContent;
+
+        if (typeof window.onCreneauSelected === "function") {
+          window.onCreneauSelected(bonus);
+        }
+      };
     }
-
-    if (slot.optim) {
-      btn.classList.add("slot-optimise");
-      btn.innerHTML = `<div class="slot-banner-optim">OPTIMISÉ • ${slot.ecoEuro.toFixed(1)} €</div>` + btn.textContent;
-    }
-
-    btn.onclick = () => {
-      document.querySelectorAll(".slot-btn").forEach(b => b.classList.remove("selected"));
-      btn.classList.add("selected");
-      slotHidden.value = `${fromMin(slot.start)} – ${fromMin(slot.end)}`;
-    };
 
     slotsDiv.appendChild(btn);
-  });
-
-  if (!slotsAff.length) msg.textContent = "Aucun créneau compatible.";
+  }
 }
 
-// ======================================================
-// INIT LISTENERS
-// ======================================================
+/* ================== INIT ================== */
+
 document.addEventListener("DOMContentLoaded", () => {
-  ["date", "cp", "commune", "adresse", "extra30"].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.addEventListener("input", updateSlotsUI);
-  });
+  const dateEl = document.getElementById("date");
+  const cpEl = document.getElementById("cp");
+
+  dateEl?.addEventListener("change", updateSlotsUI);
+  cpEl?.addEventListener("change", updateSlotsUI);
 });
 
-// Export
+// Exposé pour appel externe si nécessaire
 window.updateSlotsUI = updateSlotsUI;
-

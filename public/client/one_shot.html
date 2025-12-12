@@ -9,77 +9,32 @@
 
   <style>
     .slots-wrapper.hidden { display: none; }
-    #slots { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
-
-    .slot-btn {
-      padding: 10px 14px;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-      background: #eee;
-      cursor: pointer;
-      transition: 0.2s;
-      position: relative;
-    }
-
-    .slot-btn:hover { background: #ddd; }
-    .slot-btn.selected {
-      background: #c3e8ff;
-      border-color: #1e90ff;
-      font-weight: 600;
-    }
-
-    /* Optimisé */
-    .slot-optimise {
-      background: #d9ffe0 !important;
-      border-color: #32a852 !important;
-    }
-
-    /* EXTRA */
-    .slot-extra {
-      background: #ffe9c7 !important;
-      border-color: #e29a00 !important;
-    }
-
-    .slot-banner-extra {
-      font-size: 11px;
-      background: #e29a00;
-      color: white;
-      padding: 2px 4px;
-      border-radius: 4px;
-      margin-bottom: 3px;
-    }
-
-    .slot-banner-optim {
-      font-size: 11px;
-      background: #32a852;
-      color: white;
-      padding: 2px 4px;
-      border-radius: 4px;
-      margin-bottom: 3px;
-    }
+    #slots { display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
+    .slot-btn { padding:10px 14px; border-radius:6px; border:1px solid #ccc; background:#eee; cursor:pointer; }
+    .slot-btn.selected { background:#c3e8ff; border-color:#1e90ff; font-weight:600; }
+    .input-error { border-color:#d9534f !important; background:#ffe5e5 !important; }
   </style>
 </head>
 
 <body>
-
 <div class="page-container">
   <h1>Réservation One Shot</h1>
-  <hr>
+  <hr />
 
-  <!-- ========================= FORMULAIRE ========================= -->
   <form id="form-one-shot" novalidate>
 
     <label>Date souhaitée :</label>
     <input type="date" id="date" required />
 
     <label>Code postal :</label>
-    <input type="text" id="cp" required maxlength="4" />
+    <input type="text" id="cp" maxlength="4" required />
 
     <label>Commune :</label>
     <input type="text" id="commune" required />
+    <div id="cpcom-status" style="font-size:13px;color:#666;margin-top:4px;"></div>
 
     <label>Adresse complète :</label>
-    <input type="text" id="adresse" required placeholder="Rue + numéro" />
+    <input type="text" id="adresse" placeholder="Rue + numéro" required />
 
     <label>Téléphone :</label>
     <input type="tel" id="telephone" required />
@@ -87,13 +42,12 @@
     <label>E-mail :</label>
     <input type="email" id="email" required />
 
-    <label>Note complémentaire :</label>
+    <label>Note :</label>
     <textarea id="note" rows="2"></textarea>
 
-    <input type="hidden" id="form-type" value="oneShot" />
     <input type="hidden" id="slot" />
 
-    <hr>
+    <hr />
     <h2>Créneaux disponibles</h2>
 
     <div id="slots-wrapper" class="slots-wrapper hidden">
@@ -101,120 +55,135 @@
       <div id="slots"></div>
     </div>
 
-    <hr>
-
+    <hr />
     <button type="button" id="btn-reserver" class="btn-primary">
       Réserver ce créneau
     </button>
-
   </form>
 </div>
 
-
-<!-- ========================= Firebase ========================= -->
+<!-- ========================= FIREBASE ========================= -->
 <script type="module">
-import {
-  initializeApp
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { getDatabase, ref, push } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-import {
-  getDatabase,
-  ref,
-  push,
-  set
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+  const app = initializeApp({
+    apiKey: "AIzaSyC5Rly--5aw3VSEuhRcyZxzD5fg1JJowbE",
+    authDomain: "lift-agenda-app.firebaseapp.com",
+    databaseURL: "https://lift-agenda-app-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "lift-agenda-app"
+  });
 
-const firebaseConfig = {
-  apiKey: "AIzaSyC5Rly--5aw3VSEuhRcyZxzD5fg1JJowbE",
-  authDomain: "lift-agenda-app.firebaseapp.com",
-  databaseURL: "https://lift-agenda-app-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "lift-agenda-app",
-  storageBucket: "lift-agenda-app.appspot.com",
-  messagingSenderId: "804813302927",
-  appId: "1:804813302927:web:cbb64d2cb41f7d4320bb22"
-};
-
-const app = initializeApp(firebaseConfig);
-const db  = getDatabase(app);
-
-// Rendre dispo au moteur slot.js
-window.db = db;
-window.firebaseRef   = ref;
-window.firebasePush  = push;
-window.firebaseSet   = set;
-
+  window.db = getDatabase(app);
+  window.firebaseRef = ref;
+  window.firebasePush = push;
 </script>
 
-<!-- ========================= CHARGEMENT DU MOTEUR DE CRÉNEAUX ========================= -->
+<!-- ========================= AUTO-COMPLÉTION CP → COMMUNE ========================= -->
+<script>
+const cpInput = document.getElementById("cp");
+const comInput = document.getElementById("commune");
+const statusEl = document.getElementById("cpcom-status");
+
+let timer;
+cpInput.addEventListener("input", () => {
+  const cp = cpInput.value.trim();
+  comInput.value = "";
+  statusEl.textContent = "";
+
+  if (cp.length !== 4) return;
+
+  clearTimeout(timer);
+  timer = setTimeout(async () => {
+    statusEl.textContent = "Recherche de la commune…";
+
+    try {
+      const res = await fetch(
+        `https://secure.geonames.org/postalCodeSearchJSON?postalcode=${cp}&country=BE&maxRows=1&username=demo`
+      );
+      const data = await res.json();
+
+      if (!data.postalCodes?.length) {
+        statusEl.textContent = "Code postal inconnu";
+        return;
+      }
+
+      comInput.value = data.postalCodes[0].placeName;
+      statusEl.textContent = "Commune détectée automatiquement ✔️";
+    } catch {
+      statusEl.textContent = "Erreur de recherche";
+    }
+  }, 300);
+});
+</script>
+
+<!-- ========================= MOTEUR DE CRÉNEAUX ========================= -->
 <script src="js/slot.js"></script>
 
-<!-- ========================= ACTION RÉSERVER ========================= -->
+<!-- ========================= SUBMIT ========================= -->
 <script>
 document.getElementById("btn-reserver").onclick = async () => {
+  const date = dateEl.value;
+  const cp = cpInput.value;
+  const commune = comInput.value;
+  const adresse = adresseEl.value;
+  const slot = document.getElementById("slot").value;
 
-  const dateEl = document.getElementById("date");
-  const cpEl   = document.getElementById("cp");
-  const comEl  = document.getElementById("commune");
-  const adrEl  = document.getElementById("adresse");
-  const telEl  = document.getElementById("telephone");
-  const mailEl = document.getElementById("email");
-  const noteEl = document.getElementById("note");
-  const slotEl = document.getElementById("slot");
-
-  if (!dateEl.value || !cpEl.value || !comEl.value || !adrEl.value || !telEl.value || !mailEl.value) {
-    alert("Merci de remplir tous les champs obligatoires.");
+  if (!date || !cp || !commune || !adresse || !slot) {
+    alert("Merci de compléter tous les champs.");
     return;
   }
 
-  if (!slotEl.value) {
-    alert("Veuillez choisir un créneau.");
+  const fullAdresse = `${adresse}, ${cp} ${commune}, Belgique`;
+
+  // 🔐 Géocodage backend
+  let geo;
+  try {
+    const res = await fetch(`/api/geocode?text=${encodeURIComponent(fullAdresse)}`);
+    geo = await res.json();
+  } catch {
+    alert("Erreur de géocodage.");
     return;
   }
 
-  // Adresse complète
-  const fullAdresse = `${adrEl.value}, ${cpEl.value} ${comEl.value}, Belgique`;
-
-  // La géolocalisation a déjà été faite par slot.js → coordsClient global
-  if (!window.lastGeocodeClient) {
-    alert("Erreur géocodage : impossible de finaliser la réservation.");
+  if (!geo?.lat || !geo?.lng) {
+    alert("Adresse introuvable.");
     return;
   }
 
-  const coords = window.lastGeocodeClient;
-
-  // Créneau format HH:MM – HH:MM
-  const [hh1, hh2] = slotEl.value.split("–").map(s => s.trim());
-  const start = hh1;
-  const end   = hh2;
+  const [start, end] = slot.split("–").map(s => s.trim());
 
   const reservation = {
-    type: "ONE_SHOT",
-    date: dateEl.value,
+    type: "LFT",
+    subType: "ONE_SHOT",
+    date,
     start,
     end,
     adresse: fullAdresse,
-    coords,
-    clientPhone: telEl.value,
-    clientEmail: mailEl.value,
-    note: noteEl.value || "",
+    cp,
+    commune,
+    coords: geo,
+    phone: telephone.value,
+    email: email.value,
+    note: note.value || "",
     createdAt: new Date().toISOString()
   };
 
   try {
-    const resRef = window.firebaseRef(window.db, "reservations");
-    await window.firebasePush(resRef, reservation);
-    alert("Votre réservation a été enregistrée !");
-  } 
-  catch (e) {
+    await window.firebasePush(
+      window.firebaseRef(window.db, "reservations"),
+      reservation
+    );
+    alert("Réservation enregistrée !");
+  } catch (e) {
     console.error(e);
-    alert("Erreur lors de l'enregistrement.");
+    alert("Erreur d'enregistrement.");
   }
 };
 </script>
 
 </body>
 </html>
-
 
 
 

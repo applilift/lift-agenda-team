@@ -750,9 +750,7 @@
 
   <!-- ✅ Firebase SDK (exposé global) -->
   <script type="module">
-   // === Clé OpenRouteService (depuis Netlify) ===
-const ORS_API_KEY = window.NETLIFY_ENV?.ORS_API_KEY || "eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6IjIzMWFmY2M1YzhiOTQ4YjlhYWY1ZTE2YWQ5NDhkZWY5IiwiaCI6Im11cm11cjY0In0=";
-console.log("🔑 ORS_API_KEY chargée :", ORS_API_KEY);
+
  
   import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
 
@@ -1666,7 +1664,7 @@ html {
   <div class="toast" id="toast"></div>
   <!-- ===== Script principal ===== -->
   <script type="module">
-    const ORS_API_KEY = "eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6IjIzMWFmY2M1YzhiOTQ4YjlhYWY1ZTE2YWQ5NDhkZWY5IiwiaCI6Im11cm11cjY0In0=";
+ 
 
 // Aliases Firebase exposés globalement depuis le <head>
 const db = window.db;
